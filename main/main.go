@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -8,7 +9,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	app "github.com/AFukun/haechi/consensus/BFT"
+	consBFT "haechi/consensus/bft"
 	// app "../consensus/BFT"
 	"github.com/dgraph-io/badger"
 	"github.com/spf13/viper"
@@ -21,11 +22,18 @@ import (
 
 var homeDir string
 
-func main() {
-	homeDir = os.ExpandEnv("$HOME/.tendermint")
-	config := cfg.DefaultValidatorConfig()
+func init() {
+	flag.StringVar(&homeDir, "home", "", "node path")
+}
 
+func main() {
+	flag.Parse()
+	if homeDir == "" {
+		homeDir = os.ExpandEnv("$HOME/.tendermint")
+	}
+	config := cfg.DefaultValidatorConfig()
 	config.SetRoot(homeDir)
+	// shardDir := filepath.Join(homeDir, "config/shard1")
 
 	viper.SetConfigFile(fmt.Sprintf("%s/%s", homeDir, "config/config.toml"))
 	if err := viper.ReadInConfig(); err != nil {
@@ -37,12 +45,16 @@ func main() {
 	if err := config.ValidateBasic(); err != nil {
 		log.Fatalf("Invalid configuration data: %v", err)
 	}
+
 	gf, err := types.GenesisDocFromFile(config.GenesisFile())
 	if err != nil {
 		log.Fatalf("Loading genesis document: %v", err)
 	}
 
 	dbPath := filepath.Join(homeDir, "badger")
+	fmt.Println("The data path is" + dbPath)
+	// fmt.Println("The Proxy address is" + config.BaseConfig.ProxyApp)
+
 	db, err := badger.Open(badger.DefaultOptions(dbPath))
 	if err != nil {
 		log.Fatalf("Opening database: %v", err)
@@ -52,11 +64,13 @@ func main() {
 			log.Fatalf("Closing database: %v", err)
 		}
 	}()
-	app := app.NewKVStoreApplication(db)
+	app := consBFT.NewKVStoreApplication(db)
 	acc := abciclient.NewLocalCreator(app)
 
 	logger := tmlog.MustNewDefaultLogger(tmlog.LogFormatPlain, tmlog.LogLevelInfo, false)
 	node, err := nm.New(config, logger, acc, gf)
+
+	// node1, err := nm.Make
 	if err != nil {
 		log.Fatalf("Creating node: %v", err)
 	}

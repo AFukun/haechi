@@ -1,0 +1,6 @@
+{
+    "go.docsTool": "gogetdoc",
+    "gopls": {
+        "build.experimentalWorkspaceModule": true
+    }
+}
