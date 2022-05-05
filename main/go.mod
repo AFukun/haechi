@@ -6,7 +6,7 @@ require (
 	github.com/dgraph-io/badger v1.6.2
 	github.com/spf13/viper v1.11.0
 	github.com/tendermint/tendermint v0.35.4
-	haechi/consensus/bft v0.0.0
+	haechi/consensus/bft v0.0.0-00010101000000-000000000000
 )
 
 replace haechi/consensus/bft => ../consensus/bft

@@ -14,6 +14,8 @@ import (
 	"github.com/dgraph-io/badger"
 	"github.com/spf13/viper"
 	abciclient "github.com/tendermint/tendermint/abci/client"
+
+	// kvtest "github.com/tendermint/tendermint/abci/example/kvstore"
 	cfg "github.com/tendermint/tendermint/config"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	nm "github.com/tendermint/tendermint/node"
@@ -33,7 +35,6 @@ func main() {
 	}
 	config := cfg.DefaultValidatorConfig()
 	config.SetRoot(homeDir)
-	// shardDir := filepath.Join(homeDir, "config/shard1")
 
 	viper.SetConfigFile(fmt.Sprintf("%s/%s", homeDir, "config/config.toml"))
 	if err := viper.ReadInConfig(); err != nil {
@@ -52,8 +53,7 @@ func main() {
 	}
 
 	dbPath := filepath.Join(homeDir, "badger")
-	fmt.Println("The data path is" + dbPath)
-	// fmt.Println("The Proxy address is" + config.BaseConfig.ProxyApp)
+	// fmt.Println("The data path is" + dbPath)
 
 	db, err := badger.Open(badger.DefaultOptions(dbPath))
 	if err != nil {
@@ -64,17 +64,14 @@ func main() {
 			log.Fatalf("Closing database: %v", err)
 		}
 	}()
-	app := consBFT.NewKVStoreApplication(db)
+	app := consBFT.NewShardBFTApplication(db)
+	// app := NewKVStoreApplication(db)
 	acc := abciclient.NewLocalCreator(app)
-
 	logger := tmlog.MustNewDefaultLogger(tmlog.LogFormatPlain, tmlog.LogLevelInfo, false)
 	node, err := nm.New(config, logger, acc, gf)
-
-	// node1, err := nm.Make
 	if err != nil {
 		log.Fatalf("Creating node: %v", err)
 	}
-
 	node.Start()
 	defer func() {
 		node.Stop()
