@@ -5,7 +5,7 @@
 package ahl
 
 import (
-	htx "haechi/structure/transaction"
+	"github.com/AFukun/haechi/common"
 	"strconv"
 )
 
@@ -15,10 +15,10 @@ type AHLCoordinator struct {
 }
 
 func (ac *AHLCoordinator) DeliverTxToShards(tx []byte) {
-	hTx, _ := htx.ShardTxToHtransaction(tx)
-	vtx, etx := htx.DivideTransaction(hTx)
-	vtxByte := htx.VerifyTxToShardTx(vtx)
-	etxByte := htx.ExecutionTxToShardTx(etx)
+	hTx, _ := common.ShardTxToHtransaction(tx)
+	vtx, etx := common.DivideTransaction(hTx)
+	vtxByte := common.VerifyTxToShardTx(vtx)
+	etxByte := common.ExecutionTxToShardTx(etx)
 	fromShardId, _ := strconv.Atoi(string(vtx.FromShardId))
 	toShardId, _ := strconv.Atoi(string(etx.ToShardId))
 	ac.ForwardTx(fromShardId, vtxByte)

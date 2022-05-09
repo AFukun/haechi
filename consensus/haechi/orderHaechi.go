@@ -4,7 +4,7 @@
 package haechi
 
 import (
-	haechicl "haechi/structure/crosslink"
+	"github.com/AFukun/haechi/common"
 )
 
 type HaechiCoordinator struct {
@@ -12,6 +12,6 @@ type HaechiCoordinator struct {
 	listAdd  string // TCP socket address receiving cross-shard transactions
 }
 
-func (hc *HaechiCoordinator) OrderHaechiTx(cls []haechicl.CrossLink) {
+func (hc *HaechiCoordinator) OrderHaechiTx(cls []common.CrossLink) {
 
 }
