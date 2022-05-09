@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/AFukun/haechi/abci"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/viper"
 	abciclient "github.com/tendermint/tendermint/abci/client"
@@ -59,7 +58,7 @@ func main() {
 			log.Fatalf("Closing database: %v", err)
 		}
 	}()
-	app := abci.NewShardBFTApplication(db)
+	app := NewKVStoreApplication(db)
 	acc := abciclient.NewLocalCreator(app)
 
 	logger := tmlog.MustNewDefaultLogger(tmlog.LogFormatPlain, tmlog.LogLevelInfo, false)

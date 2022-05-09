@@ -1,15 +1,10 @@
-//-----------------------------------------------------------------------------
-// crosslink is the cross-shard message used in Haechi
-
-package common
+package types
 
 import (
 	"bytes"
 	"log"
 )
 
-// set the length of address as 160 bits, as Ethereum does,
-// current length = 16 bits
 const AddressLengthByte uint = 2
 
 type CrossLink struct {

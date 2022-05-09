@@ -5,7 +5,7 @@
 // vtx: verification transaction that is sent to sender's shard for account verification
 // etx: execution transaction that is sent to contract's shard for contract execution
 
-package common
+package types
 
 import (
 	"bytes"

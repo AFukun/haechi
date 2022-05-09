@@ -12,10 +12,10 @@
 
 # TCP or UNIX socket address of the ABCI application,
 # or the name of an ABCI application compiled in with the Tendermint binary
-proxy-app = "tcp://127.0.0.1:10158"
+proxy-app = "tcp://127.0.0.1:20158"
 
 # A custom human readable name for this node
-moniker = "127.0.0.1"
+moniker = "node1"
 
 # Mode of Node: full | validator | seed
 # * validator node
@@ -112,7 +112,7 @@ root-ca-file = ""
 [rpc]
 
 # TCP or UNIX socket address for the RPC server to listen on
-laddr = "tcp://127.0.0.1:10157"
+laddr = "tcp://127.0.0.1:20157"
 
 # A list of origins a cross-domain request can be executed from
 # Default value '[]' disables cors support
@@ -231,7 +231,7 @@ use-legacy = false
 queue-type = "priority"
 
 # Address to listen for incoming connections
-laddr = "tcp://0.0.0.0:10156"
+laddr = "tcp://127.0.0.1:20156"
 
 # Address to advertise to peers for them to dial
 # If empty, will use the same port as the laddr,
@@ -253,7 +253,7 @@ seeds = ""
 bootstrap-peers = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent-peers = "e79814f4483a818e802346f53fc23e3b14e3147c@node0:10056,137ce2ef02b155c0307108e15ea174d19ce7db87@127.0.0.1:10256,a299f8407577dba848f9463bb1a9e039945f8f2b@127.0.0.1:10356"
+persistent-peers = "e79814f4483a818e802346f53fc23e3b14e3147c@127.0.0.1:20056,137ce2ef02b155c0307108e15ea174d19ce7db87@127.0.0.1:20256,a299f8407577dba848f9463bb1a9e039945f8f2b@127.0.0.1:20356"
 
 # UPNP port forwarding
 upnp = false
@@ -515,7 +515,7 @@ psql-conn = ""
 prometheus = false
 
 # Address to listen for Prometheus collector(s) connections
-prometheus-listen-addr = ":10160"
+prometheus-listen-addr = ":20160"
 
 # Maximum number of simultaneous connections.
 # If you want to accept a larger number than the default, make sure
