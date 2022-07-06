@@ -3,3 +3,5 @@
 go.sum
 build/
 tmplog/
+*_test.go
+*_command.md

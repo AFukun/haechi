@@ -5,3 +5,6 @@ build:
 
 run_testnet:
 	bash ./scripts/run_testnet.sh
+
+run_elrondtest:
+	bash ./scripts/run_elrond.sh

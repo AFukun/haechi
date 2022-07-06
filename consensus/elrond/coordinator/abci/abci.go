@@ -1,8 +1,10 @@
 package abci
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
+	"strconv"
 
 	elrondNode "github.com/AFukun/haechi/consensus/elrond/coordinator/validator"
 	abcicode "github.com/tendermint/tendermint/abci/example/code"
@@ -67,20 +69,43 @@ func (app *ElrondApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcity
 	return abcitypes.ResponseBeginBlock{}
 }
 
-func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	_, tx_json := elrondNode.ResolveTx(req.Tx)
-	var err1, err2 error
+func (app *ElrondApplication) DeliverTx2(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
+	var key, value string
+
+	parts := bytes.Split(req.Tx, []byte("="))
+	if len(parts) == 2 {
+		key, value = string(parts[0]), string(parts[1])
+	} else {
+		key, value = string(req.Tx), string(req.Tx)
+	}
+
+	err := app.Node.BCState.Database.Set(prefixKey([]byte(key)), []byte(value))
+	if err != nil {
+		panic(err)
+	}
+	// app.state.Size++
+
 	events := []abcitypes.Event{
 		{
 			Type: "app",
 			Attributes: []abcitypes.EventAttribute{
 				{Key: "creator", Value: "Cosmoshi Netowoko", Index: true},
-				{Key: "key", Value: string(tx_json.From), Index: true},
+				{Key: "key", Value: key, Index: true},
 				{Key: "index_key", Value: "index is working", Index: true},
 				{Key: "noindex_key", Value: "index is working", Index: false},
 			},
 		},
 	}
+
+	return abcitypes.ResponseDeliverTx{Code: abcicode.CodeTypeOK, Events: events}
+}
+
+func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
+	fmt.Println("Elrond: Intra_shard DeliverTx...")
+	_, tx_json := elrondNode.ResolveTx(req.Tx)
+	var err1, err2 error
+	var events []abcitypes.Event
+	var event_type string
 	new_tx := elrondNode.TransactionType{
 		Tx_type: tx_json.Tx_type,
 		From:    tx_json.From,
@@ -89,41 +114,59 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 		Data:    tx_json.Data,
 	}
 	if tx_json.Tx_type == elrondNode.IntraShard_TX {
+		// fmt.Println("This is an intra-shard transaction")
+		event_type = "intra-shard transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Verify {
+		// fmt.Println("This is a verification transaction")
+		event_type = "inter-shard verification transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("lock"))
 		new_tx.Tx_type = elrondNode.InterShard_TX_Execute
 		_, exec_tx := elrondNode.Deserilization(new_tx)
 		if app.Node.Leader {
-			app.Node.DeliverExecutionTx(exec_tx)
+			go app.Node.DeliverExecutionTx(exec_tx)
 		}
+
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Execute {
+		// fmt.Println("This is an execution transaction")
+		event_type = "inter-shard execution transaction"
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("lock"))
 		new_tx.Tx_type = elrondNode.InterShard_TX_Commit
 		_, commit_tx := elrondNode.Deserilization(new_tx)
 		if app.Node.Leader {
-			app.Node.DeliverCommitTx(commit_tx)
+			go app.Node.DeliverCommitTx(commit_tx)
 		}
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Commit {
+		// fmt.Println("This is a commit transaction")
+		event_type = "inter-shard commit transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
 		new_tx.Tx_type = elrondNode.InterShard_TX_Update
 		_, update_tx := elrondNode.Deserilization(new_tx)
 		if app.Node.Leader {
-			app.Node.DeliverUpdateTx(update_tx)
+			go app.Node.DeliverUpdateTx(update_tx)
 		}
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Update {
+		// fmt.Println("This is an update transaction")
+		event_type = "inter-shard update transaction"
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 		app.Node.BCState.Size++
-		if err1 == nil || err2 == nil {
-			return abcitypes.ResponseDeliverTx{Code: abcicode.CodeTypeOK, Events: events}
-		}
-
 	}
-	if err1 == nil || err2 == nil {
-		return abcitypes.ResponseDeliverTx{Code: abcicode.CodeTypeOK, Events: events}
+	if err1 != nil || err2 != nil {
+		panic(err1)
 	}
-	return abcitypes.ResponseDeliverTx{Code: abcicode.CodeTypeUnknownError, Events: events}
+	events = []abcitypes.Event{
+		{
+			Type: event_type,
+			Attributes: []abcitypes.EventAttribute{
+				{Key: "from", Value: string(tx_json.From), Index: true},
+				{Key: "to", Value: string(tx_json.To), Index: true},
+				{Key: "value", Value: strconv.Itoa(int(tx_json.Value)), Index: true},
+				{Key: "data", Value: string(tx_json.Data), Index: true},
+			},
+		},
+	}
+	return abcitypes.ResponseDeliverTx{Code: abcicode.CodeTypeOK, Events: events}
 }
 
 func (app *ElrondApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {

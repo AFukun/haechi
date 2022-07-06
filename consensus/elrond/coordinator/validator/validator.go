@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net"
+	"net/http"
 	"strconv"
 
 	dbm "github.com/tendermint/tm-db"
@@ -76,10 +79,14 @@ func loadState(db dbm.DB) BlockchainState {
 
 func NewBlockchainState(name string, dir string) *BlockchainState {
 	var bcstate BlockchainState
+	var err error
 	// bcstate, _ := loadState(dbm.DB.(name, dir))
-	bcstate.Database, _ = dbm.NewDB(name, dbm.BadgerDBBackend, dir)
+	bcstate.Database, err = dbm.NewDB(name, dbm.GoLevelDBBackend, dir)
 	bcstate.Height = 0
 	bcstate.Size = 0
+	if err != nil {
+		log.Fatalf("Create database error: %v", err)
+	}
 	// state.AppHash =
 	return &bcstate
 	// return BlockchainState{
@@ -110,38 +117,44 @@ func NewValidatorInterface(bcstate *BlockchainState, leader bool, ip_in net.IP, 
 	}
 }
 
-func (nw *ValidatorInterface) DeliverExecutionTx(tx []byte) string {
-	// TODO: GetTxType(tx) == 2
+func (nw *ValidatorInterface) DeliverExecutionTx(tx []byte) {
 	tx_str := string(tx)
 	receiver_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
 	request := receiver_addr
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	return request
+	_, err := http.Get("http://" + request)
+	if err != nil {
+		fmt.Println("Error: deliver execution tx error when request a curl")
+	}
 }
 
-func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) string {
-	// TODO: GetTxType(tx) == 3
+func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
 	tx_str := string(tx)
 	sender_addr := net.JoinHostPort(nw.ip_input_shard.String(), strconv.Itoa(int(nw.port_input_shard)))
 	request := sender_addr
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	return request
+	_, err := http.Get("http://" + request)
+	if err != nil {
+		fmt.Println("Error: deliver execution tx error when request a curl")
+	}
 }
 
-func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte) string {
+func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte) {
 	// output_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
-	// TODO: GetTxType(tx) == 4
 	tx_str := string(tx)
 	receiver_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
 	request := receiver_addr
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	return request
+	_, err := http.Get("http://" + request)
+	if err != nil {
+		fmt.Println("Error: deliver execution tx error when request a curl")
+	}
 }
 
 type TransactionType struct {
