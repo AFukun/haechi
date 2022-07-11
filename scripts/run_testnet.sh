@@ -1,3 +1,4 @@
+GOSRC=$GOPATH/src
 TEST_SCENE="example"
 TM_HOME="$HOME/.example"
 WORKSPACE="$GOSRC/github.com/AFukun/haechi"

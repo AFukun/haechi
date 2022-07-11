@@ -8,3 +8,6 @@ run_testnet:
 
 run_elrondtest:
 	bash ./scripts/run_elrond.sh
+
+run_elrondtest:
+	bash ./scripts/run_haechi.sh

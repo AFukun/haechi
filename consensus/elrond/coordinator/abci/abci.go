@@ -42,17 +42,6 @@ func (ElrondApplication) InitChain(req abcitypes.RequestInitChain) abcitypes.Res
 	return abcitypes.ResponseInitChain{}
 }
 
-// func (app *ElrondApplication) Info(_ context.Context, req *abcitypes.RequestInfo) (*abcitypes.ResponseInfo, error) {
-// 	// app.mu.Lock()
-// 	// defer app.mu.Unlock()
-// 	return &abcitypes.ResponseInfo{
-// 		Data:             fmt.Sprintf("{\"size\":%v}", app.Node.BCState.Size),
-// 		Version:          "v1",
-// 		AppVersion:       ProtocolVersion,
-// 		LastBlockHeight:  app.Node.BCState.Height,
-// 		LastBlockAppHash: app.Node.BCState.AppHash,
-// 	}, nil
-// }
 func (ElrondApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
 	return abcitypes.ResponseInfo{}
 }
@@ -118,6 +107,7 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 		event_type = "intra-shard transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
+		app.Node.BCState.Size++
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Verify {
 		// fmt.Println("This is a verification transaction")
 		event_type = "inter-shard verification transaction"

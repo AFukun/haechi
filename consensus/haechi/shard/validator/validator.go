@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	dbm "github.com/tendermint/tm-db"
-	// "github.com/dgraph-io/badger/v3"
 )
 
 /*
@@ -35,16 +34,14 @@ const (
 	InterShard_TX_Execute uint8 = 2
 	InterShard_TX_Commit  uint8 = 3
 	InterShard_TX_Update  uint8 = 4
+	CrossShard_Call_List  uint8 = 5
 )
-
-// var (
-// 	stateKey = []byte("stateKey")
-// )
 
 type BlockchainState struct {
 	Database dbm.DB
-	Size     int64
-	Height   int64
+	Size     uint32
+	Height   uint32
+	Index    uint32 // cross_shard tx number in a shard
 	AppHash  []byte
 }
 
@@ -55,6 +52,7 @@ func NewBlockchainState(name string, dir string) *BlockchainState {
 	bcstate.Database, err = dbm.NewDB(name, dbm.GoLevelDBBackend, dir)
 	bcstate.Height = 0
 	bcstate.Size = 0
+	bcstate.Index = 0
 	if err != nil {
 		log.Fatalf("Create database error: %v", err)
 	}
@@ -63,21 +61,25 @@ func NewBlockchainState(name string, dir string) *BlockchainState {
 
 type ValidatorInterface struct {
 	BCState           *BlockchainState
+	Shard_id          uint8
 	Leader            bool
-	ip_input_shard    net.IP // send commit tx to the input shard
+	ip_input_shard    net.IP // own IP
 	port_input_shard  uint16
-	ip_output_shard   net.IP // send execute tx to the output shard
+	ip_output_shard   net.IP // beaconchain IP
 	port_output_shard uint16
+	Current_cl        string
 }
 
-func NewValidatorInterface(bcstate *BlockchainState, leader bool, ip_in net.IP, port_in uint16, ip_out net.IP, port_out uint16) *ValidatorInterface {
+func NewValidatorInterface(bcstate *BlockchainState, shard_id uint8, leader bool, ip_in net.IP, port_in uint16, ip_out net.IP, port_out uint16) *ValidatorInterface {
 	return &ValidatorInterface{
 		BCState:           bcstate,
+		Shard_id:          shard_id,
 		Leader:            leader,
 		ip_input_shard:    ip_in,
 		port_input_shard:  port_in,
 		ip_output_shard:   ip_out,
 		port_output_shard: port_out,
+		Current_cl:        "",
 	}
 }
 
@@ -94,6 +96,23 @@ func (nw *ValidatorInterface) DeliverExecutionTx(tx []byte) {
 	}
 }
 
+func (nw *ValidatorInterface) DeliverCrossLink(blockts int64) {
+	tx_str := "blocktimestamp="
+	tx_str += strconv.Itoa(int(blockts))
+	tx_str += ","
+	tx_str += nw.Current_cl
+	receiver_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
+	request := receiver_addr
+	request += "/broadcast_tx_commit?tx=\""
+	request += tx_str
+	request += "\""
+	_, err := http.Get("http://" + request)
+	if err != nil {
+		fmt.Println("Error: deliver execution tx error when request a curl")
+	}
+	nw.Current_cl = ""
+}
+
 func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
 	tx_str := string(tx)
 	sender_addr := net.JoinHostPort(nw.ip_input_shard.String(), strconv.Itoa(int(nw.port_input_shard)))
@@ -108,7 +127,6 @@ func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
 }
 
 func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte) {
-	// output_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
 	tx_str := string(tx)
 	receiver_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
 	request := receiver_addr
@@ -132,7 +150,6 @@ type TransactionType struct {
 
 func Serilization(tx []byte) (uint32, TransactionType) {
 	var tx_json TransactionType
-	// tx_json.Tx_type = 4
 	txElements := bytes.Split(tx, []byte(","))
 	if len(txElements) == 0 {
 		return 1, tx_json
@@ -194,8 +211,6 @@ func ResolveTx(_tx []byte) (uint32, TransactionType) {
 	} else {
 		return 1, tx
 	}
-	// txType := IntraShard_TX
-	// return txType
 }
 
 func GetTxType(_tx []byte) uint8 {
