@@ -227,7 +227,7 @@ external-address = ""
 bootstrap-peers = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent-peers = "0fcfecb15dee4afbd436db79c50e4a6f84fc2edd@127.0.0.1:20056"
+persistent-peers = "caf484cb53522666fac0129b6cec2bd7b4c936e5@127.0.0.1:20056"
 
 # UPNP port forwarding
 upnp = false
@@ -381,7 +381,7 @@ wal-file = "data/cs.wal/wal"
 double-sign-check-height = 0
 
 # EmptyBlocks mode and possible interval between empty blocks
-create-empty-blocks = true
+create-empty-blocks = false
 create-empty-blocks-interval = "0s"
 
 # Reactor sleep duration parameters

@@ -33,7 +33,7 @@ func init() {
 	flag.StringVar(&isLeader, "leader", "false", "Is it a leader (default: false)")
 	flag.UintVar(&shardNum, "shards", 2, "the number of shards")
 	flag.UintVar(&localPort, "inport", 10057, "beacon chain rpc port")
-	flag.StringVar(&remotePorts, "outport", "20057, 21057", "shards chain rpc port")
+	flag.StringVar(&remotePorts, "outport", "20057,21057", "shards chain rpc port")
 }
 
 func main() {
@@ -75,13 +75,14 @@ func main() {
 	out_ips_temps := make([]hbcchainnode.HaechiAddress, shardNum)
 	out_ports_temp := []byte(remotePorts)
 	out_ports := bytes.Split(out_ports_temp, []byte(","))
-	for _, out_port := range out_ports {
+	for i, out_port := range out_ports {
 		temp_value64, _ := strconv.ParseUint(string(out_port), 10, 64)
-		out_ips_temps = append(out_ips_temps, hbcchainnode.HaechiAddress{
+		out_ips_temps[i] = hbcchainnode.HaechiAddress{
 			Ip:   []byte{127, 0, 0, 1},
 			Port: uint16(temp_value64),
-		})
+		}
 	}
+	// out_ips_temps = out_ips_temps[1:]
 	if isLeader == "true" {
 		validatorInterface = hbcchainnode.NewValidatorInterface(db, uint8(shardNum), true, in_ip_temp, out_ips_temps)
 	} else if isLeader == "false" {

@@ -12,17 +12,6 @@ import (
 	dbm "github.com/tendermint/tm-db"
 )
 
-/*
-A transaction is defined as a json including:
-{
-	tx_type uint32
-	from	[20]byte
-	to		[20]byte
-	value	uint32
-	data	[20]byte
-}
-e.g., sent by user as: "type=0,from=ABCD,to=DCBA,value=0,data=NONE"
-*/
 const (
 	Addr_Length uint8 = 4
 	Data_Length uint8 = 4
@@ -50,7 +39,7 @@ func NewBlockchainState(name string, dir string) *BlockchainState {
 	var err error
 	// bcstate, _ := loadState(dbm.DB.(name, dir))
 	bcstate.Database, err = dbm.NewDB(name, dbm.GoLevelDBBackend, dir)
-	bcstate.Height = 0
+	bcstate.Height = 1
 	bcstate.Size = 0
 	bcstate.Index = 0
 	if err != nil {
@@ -96,21 +85,20 @@ func (nw *ValidatorInterface) DeliverExecutionTx(tx []byte) {
 	}
 }
 
-func (nw *ValidatorInterface) DeliverCrossLink(blockts int64) {
+func (nw *ValidatorInterface) DeliverCrossLink(blockts int64, cl string) {
+
 	tx_str := "blocktimestamp="
 	tx_str += strconv.Itoa(int(blockts))
 	tx_str += ","
-	tx_str += nw.Current_cl
-	receiver_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
-	request := receiver_addr
-	request += "/broadcast_tx_commit?tx=\""
+	tx_str += cl
+	receiver_addr := net.JoinHostPort(nw.ip_input_shard.String(), strconv.Itoa(int(nw.port_input_shard)))
+	request := "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	_, err := http.Get("http://" + request)
+	_, err := http.Get("http://" + receiver_addr + request)
 	if err != nil {
 		fmt.Println("Error: deliver execution tx error when request a curl")
 	}
-	nw.Current_cl = ""
 }
 
 func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
@@ -176,8 +164,8 @@ func Serilization(tx []byte) (uint32, TransactionType) {
 		case string(kv[0]) == "nonce":
 			temp_value64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
 			tx_json.Nonce = uint32(temp_value64)
-		default:
-			return 1, tx_json
+			// default:
+			// 	return 1, tx_json
 		}
 	}
 	return 0, tx_json

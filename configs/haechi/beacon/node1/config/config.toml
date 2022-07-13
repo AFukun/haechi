@@ -381,7 +381,7 @@ wal-file = "data/cs.wal/wal"
 double-sign-check-height = 0
 
 # EmptyBlocks mode and possible interval between empty blocks
-create-empty-blocks = true
+create-empty-blocks = false
 create-empty-blocks-interval = "0s"
 
 # Reactor sleep duration parameters

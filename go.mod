@@ -4,11 +4,11 @@ go 1.17
 
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
+	github.com/emirpasic/gods v1.18.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/spf13/viper v1.12.0
 	github.com/tendermint/tendermint v0.35.7
 	github.com/tendermint/tm-db v0.6.6
-	gotest.tools v2.2.0+incompatible
 )
 
 require (
@@ -31,7 +31,6 @@ require (
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/btree v1.0.0 // indirect
 	github.com/google/flatbuffers v1.12.1 // indirect
-	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect

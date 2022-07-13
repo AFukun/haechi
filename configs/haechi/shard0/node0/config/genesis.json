@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2022-07-06T07:25:35.385416Z",
+  "genesis_time": "2022-07-12T03:12:17.936461Z",
   "chain_id": "chain-T8NbcT",
   "initial_height": "0",
   "consensus_params": {
@@ -39,19 +39,19 @@
   },
   "validators": [
     {
-      "address": "E6C9CD288467D3640FDE89C2F19E4F7D87EFCB56",
+      "address": "5B2FB5552D74A389CCE1944A714E333240E6E1F1",
       "pub_key": {
         "type": "tendermint/PubKeyEd25519",
-        "value": "DrS7nhzLwHYyjYFQY73V0ralvPVNuj831fdqLW9gBNw="
+        "value": "RDVZKif7bOGAFxkfDMA3ZIILuxRyplAWdL2ZWHyegPw="
       },
       "power": "1",
       "name": "node0"
     },
     {
-      "address": "AC9FBA2076EC204D619920401DF908BC91FDEA93",
+      "address": "D42CEFB861F13B54742023B7B4FE08B890273636",
       "pub_key": {
         "type": "tendermint/PubKeyEd25519",
-        "value": "INcTlvy1YVU/KUuh8JczgAudPhVVGKf+/zJWmGrbW8Y="
+        "value": "px2+2/A50ad0KTRwDMqLw0CzOIDjaVx5TeHgjQaEOIc="
       },
       "power": "1",
       "name": "node1"

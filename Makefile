@@ -9,5 +9,5 @@ run_testnet:
 run_elrondtest:
 	bash ./scripts/run_elrond.sh
 
-run_elrondtest:
+run_haechitest:
 	bash ./scripts/run_haechi.sh

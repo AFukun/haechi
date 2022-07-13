@@ -27,7 +27,7 @@ func NewBlockchainState(name string, dir string) *BlockchainState {
 	var bcstate BlockchainState
 	var err error
 	bcstate.Database, err = dbm.NewDB(name, dbm.GoLevelDBBackend, dir)
-	bcstate.Height = 0
+	bcstate.Height = 1
 	bcstate.Size = 0
 	if err != nil {
 		log.Fatalf("Create database error: %v", err)
@@ -75,12 +75,20 @@ func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, leader boo
 		new_validator.ShardNextTS = append(new_validator.ShardNextTS, 0)
 		new_validator.ShardBlockLastTS = append(new_validator.ShardBlockLastTS, 0)
 	}
+	new_validator.ShardBlockInterval = new_validator.ShardBlockInterval[1:]
+	new_validator.ShardNextTS = new_validator.ShardNextTS[1:]
+	new_validator.ShardBlockLastTS = new_validator.ShardBlockLastTS[1:]
 	new_validator.ValidTSRange[0] = time.Now().Unix()
-	new_validator.ValidTSRange[1] = time.Now().Unix() + 1
+	new_validator.ValidTSRange[1] = math.MaxInt64
 	new_validator.Leader = leader
 	new_validator.input_addr = in_addr
-	new_validator.output_shards_addrs = out_addrs
+	new_validator.output_shards_addrs = make([]HaechiAddress, shard_num)
 	new_validator.currentCCLs = make(haechitypes.CrossShardCallLists, shard_num)
+	for i := uint8(0); i < shard_num; i++ {
+		new_validator.output_shards_addrs[i].Ip = out_addrs[i].Ip
+		new_validator.output_shards_addrs[i].Port = out_addrs[i].Port
+		new_validator.currentCCLs[i].Call_txs = aq.New()
+	}
 	new_validator.min_next_TS = math.MaxInt64
 	return &new_validator
 }
@@ -93,13 +101,10 @@ func (nw *ValidatorInterface) GlobalOrdering() {
 			continue
 		}
 		temp_cls := make([]haechitypes.CrossLink, current_ccl.Call_txs.Size())
-		for {
+		for k := uint(0); k < uint(current_ccl.Call_txs.Size()); k++ {
 			temp_tx, _ := current_ccl.Call_txs.Dequeue()
 			cl_tx := temp_tx.(haechitypes.CrossLink)
-			temp_cls = append(temp_cls, cl_tx)
-			if current_ccl.Call_txs.Empty() {
-				break
-			}
+			temp_cls[k] = cl_tx
 		}
 		sort.SliceStable(temp_cls, func(i, j int) bool {
 			return temp_cls[i].Index < temp_cls[j].Index
@@ -121,7 +126,7 @@ func (nw *ValidatorInterface) DeliverCallList(shard_id uint8) {
 	for i := uint(0); !nw.currentCCLs[shard_id].Call_txs.Empty(); i++ {
 		temp_tx, _ := nw.currentCCLs[shard_id].Call_txs.Dequeue()
 		cl_tx := temp_tx.(haechitypes.CrossLink)
-		tx_string += "type=5,"
+		tx_string += "type=5"
 		tx_string += ",from="
 		tx_string += string(cl_tx.From)
 		tx_string += ",to="
@@ -132,12 +137,12 @@ func (nw *ValidatorInterface) DeliverCallList(shard_id uint8) {
 		tx_string += string(cl_tx.Data)
 		tx_string += ",nonce="
 		tx_string += strconv.Itoa(int(cl_tx.Nonce))
-		tx_string += ";"
+		tx_string += ">"
 	}
 	receiver_addr := net.JoinHostPort(nw.output_shards_addrs[shard_id].Ip.String(), strconv.Itoa(int(nw.output_shards_addrs[shard_id].Port)))
 	request := receiver_addr
 	request += "/broadcast_tx_commit?tx=\""
-	request += tx_string[:len(tx_string)-1]
+	request += tx_string
 	request += "\""
 	_, err := http.Get("http://" + request)
 	if err != nil {
@@ -167,8 +172,8 @@ func (nw *ValidatorInterface) FormCCLs() {
 				nw.currentCCLs[cl.Shard_id].Call_txs.Enqueue(cl)
 			}
 		}
-
 	}
+	nw.GlobalOrdering()
 }
 
 func (nw *ValidatorInterface) UpdateShardCrosslinkMsgs(request []byte) {
@@ -182,7 +187,6 @@ func (nw *ValidatorInterface) UpdateShardCrosslinkMsgs(request []byte) {
 func (nw *ValidatorInterface) UpdateOrderParameters(request []byte) {
 	blockts := CheckBlockTimestamp(request)
 	shardid := CheckFromShardId(request)
-
 	current_interval := blockts - nw.ShardBlockLastTS[shardid]
 	nw.ShardBlockInterval[shardid] = current_interval
 	nw.ShardBlockLastTS[shardid] = blockts
@@ -191,10 +195,12 @@ func (nw *ValidatorInterface) UpdateOrderParameters(request []byte) {
 	if nw.ShardNextTS[shardid] < nw.min_next_TS {
 		nw.min_next_TS = nw.ShardNextTS[shardid]
 	}
+	// nw.UpdateTimestampRange()
 }
 
 func (nw *ValidatorInterface) UpdateTimestampRange() {
 	nw.ValidTSRange[0] = nw.ValidTSRange[1]
+	nw.ValidTSRange[1] = nw.min_next_TS
 
 }
 
@@ -224,11 +230,16 @@ func CheckFromShardId(tx []byte) uint8 {
 
 func CheckBlockTimestamp(tx []byte) int64 {
 	var bts int64
-	txs := bytes.Split(tx, []byte(";"))
-	kv := bytes.Split(txs[0], []byte(","))
-	if string(kv[0]) == "blocktimestamp" {
-		temp_type64, _ := strconv.ParseInt(string(kv[1]), 10, 64)
-		bts = temp_type64
+	txs := bytes.Split(tx, []byte(">"))
+	tx_elements := bytes.Split(txs[0], []byte(","))
+	for _, tx_element := range tx_elements {
+		kv := bytes.Split(tx_element, []byte("="))
+		if string(kv[0]) == "blocktimestamp" {
+			temp_type64, _ := strconv.ParseInt(string(kv[1]), 10, 64)
+			bts = temp_type64
+			break
+		}
 	}
+
 	return bts
 }
