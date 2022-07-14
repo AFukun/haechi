@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 
 	"github.com/spf13/viper"
@@ -21,17 +23,18 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-var homeDir, isLeader string
-var localPort, remotePort, shardid uint
+var homeDir, isLeader, remotePorts string
+var localPort, shardNum, shardid uint
 
 // var isLeader bool
 
 func init() {
 	flag.StringVar(&homeDir, "home", "", "Path to the tendermint config directory (if empty, uses $HOME/.tendermint)")
 	flag.StringVar(&isLeader, "leader", "false", "Is it a leader (default: false)")
-	flag.UintVar(&localPort, "inport", 12345, "local rpc port")
-	flag.UintVar(&remotePort, "outport", 10057, "beacon chain rpc port")
+	flag.UintVar(&shardNum, "shards", 2, "the number of shards")
 	flag.UintVar(&shardid, "shardid", 0, "shard id")
+	flag.UintVar(&localPort, "inport", 10057, "beacon chain rpc port")
+	flag.StringVar(&remotePorts, "outport", "20057,21057", "shards chain rpc port")
 }
 
 func main() {
@@ -66,10 +69,24 @@ func main() {
 		}
 	}()
 	var validatorInterface *hshardnode.ValidatorInterface
+	in_ip_temp := hshardnode.HaechiAddress{
+		Ip:   []byte{127, 0, 0, 1},
+		Port: uint16(localPort),
+	}
+	out_ips_temps := make([]hshardnode.HaechiAddress, shardNum)
+	out_ports_temp := []byte(remotePorts)
+	out_ports := bytes.Split(out_ports_temp, []byte(","))
+	for i, out_port := range out_ports {
+		temp_value64, _ := strconv.ParseUint(string(out_port), 10, 64)
+		out_ips_temps[i] = hshardnode.HaechiAddress{
+			Ip:   []byte{127, 0, 0, 1},
+			Port: uint16(temp_value64),
+		}
+	}
 	if isLeader == "true" {
-		validatorInterface = hshardnode.NewValidatorInterface(db, uint8(shardid), true, []byte{127, 0, 0, 1}, uint16(localPort), []byte{127, 0, 0, 1}, uint16(remotePort))
+		validatorInterface = hshardnode.NewValidatorInterface(db, uint8(shardNum), uint8(shardid), true, in_ip_temp, out_ips_temps)
 	} else if isLeader == "false" {
-		validatorInterface = hshardnode.NewValidatorInterface(db, uint8(shardid), false, []byte{127, 0, 0, 1}, uint16(localPort), []byte{127, 0, 0, 1}, uint16(remotePort))
+		validatorInterface = hshardnode.NewValidatorInterface(db, uint8(shardNum), uint8(shardid), false, in_ip_temp, out_ips_temps)
 	}
 
 	app := hshardapp.NewHaechiShardApplication(validatorInterface)

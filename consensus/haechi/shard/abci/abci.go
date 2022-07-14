@@ -55,6 +55,7 @@ func (app *HaechiShardApplication) BeginBlock(req abcitypes.RequestBeginBlock) a
 
 func (app *HaechiShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	_, tx_json := haechiNode.ResolveTx(req.Tx)
+	log.Println("Deliver tx, tx nonce is: ", tx_json.Nonce)
 	var err1, err2 error
 	var events []abcitypes.Event
 	var event_type string
@@ -68,7 +69,7 @@ func (app *HaechiShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abc
 		app.Node.BCState.Index++
 		event_type = "inter-shard transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("lock"))
-		app.Node.Current_cl = string(req.Tx)
+		app.Node.Current_cl += string(req.Tx)
 		app.Node.Current_cl += ",blockheight="
 		app.Node.Current_cl += strconv.Itoa(int(app.Node.BCState.Height))
 		app.Node.Current_cl += ",index="
@@ -77,16 +78,39 @@ func (app *HaechiShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abc
 	} else if tx_json.Tx_type == haechiNode.CrossShard_Call_List {
 		log.Println("Receive a call list from beacon chain: " + string(req.Tx))
 		_, ccl_txs := haechitypes.TxToCCL(req.Tx, app.Node.Shard_id)
-		for {
+		index := ccl_txs.Call_txs.Size()
+		for i := uint(0); i < uint(index); i++ {
 			ccl_tx, _ := ccl_txs.Call_txs.Dequeue()
 			q_tx_json := ccl_tx.(haechitypes.TransactionType)
+			// TODO: detect whether committing the transaction or not, label a tag
 			err1 = app.Node.BCState.Database.Set(prefixKey(q_tx_json.From), []byte("0"))
 			err2 = app.Node.BCState.Database.Set(prefixKey(q_tx_json.To), []byte("0"))
-			if ccl_txs.Call_txs.Empty() || err1 != nil {
-				break
+			q_tx_json.Tx_type = haechiNode.InterShard_TX_Commit
+			_, new_tx := haechiNode.Deserilization(q_tx_json)
+			if app.Node.Leader {
+				if q_tx_json.From_shard != app.Node.Shard_id {
+					go app.Node.DeliverCommitTx(new_tx, q_tx_json.From_shard)
+				} else {
+					log.Println("successfully commit a cross-shard tx")
+				}
 			}
 			app.Node.BCState.Size++
 		}
+	} else if tx_json.Tx_type == haechiNode.InterShard_TX_Commit {
+		log.Println("This is a commit transaction")
+		event_type = "inter-shard commit transaction"
+		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
+		tx_json.Tx_type = haechiNode.InterShard_TX_Update
+		_, new_tx := haechiNode.Deserilization(tx_json)
+		if app.Node.Leader {
+			log.Println("start send update tx, to: ", tx_json.To_shard)
+			go app.Node.DeliverUpdateTx(new_tx, tx_json.To_shard)
+		}
+	} else if tx_json.Tx_type == haechiNode.InterShard_TX_Update {
+		log.Println("This is an update transaction, successfully commit a cross-shard tx")
+		event_type = "inter-shard update transaction"
+		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
+		app.Node.BCState.Size++
 	}
 	if err1 != nil || err2 != nil {
 		panic(err1)

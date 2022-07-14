@@ -42,7 +42,7 @@ func (HaechiBeaconApplication) Info(req abcitypes.RequestInfo) abcitypes.Respons
 	return abcitypes.ResponseInfo{}
 }
 
-// receive: blocktimestamp=111000,fromid=1,shardid=1,type=0,from=ABCD1,to=DCBA1,value=0,data=NONE,nonce=0,blockheight=1000,index=0>fromid=1,shardid=2,type=0,from=ABCD1,to=DCBA2,value=0,data=NONE,nonce=1,blockheight=1000,index=1>
+// receive: blocktimestamp=111000,fromid=1,toid=1,type=0,from=ABCD1,to=DCBA1,value=0,data=NONE,nonce=0,blockheight=1000,index=0>fromid=1,toid=2,type=0,from=ABCD1,to=DCBA2,value=0,data=NONE,nonce=1,blockheight=1000,index=1>
 func (app *HaechiBeaconApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
 	app.Node.UpdateShardCrosslinkMsgs(req.Tx)
 	app.Node.UpdateOrderParameters(req.Tx)

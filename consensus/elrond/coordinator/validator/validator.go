@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strconv"
 
+	haechitypes "github.com/AFukun/haechi/core/types"
 	dbm "github.com/tendermint/tm-db"
-	// "github.com/dgraph-io/badger/v3"
 )
 
 /*
@@ -121,17 +121,8 @@ func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte) {
 	}
 }
 
-type TransactionType struct {
-	Tx_type uint8
-	From    []byte
-	To      []byte
-	Value   uint32
-	Data    []byte
-	Nonce   uint32 // TODO: enable contineous tx requests by setting vary nonce
-}
-
-func Serilization(tx []byte) (uint32, TransactionType) {
-	var tx_json TransactionType
+func Serilization(tx []byte) (uint32, haechitypes.TransactionType) {
+	var tx_json haechitypes.TransactionType
 	// tx_json.Tx_type = 4
 	txElements := bytes.Split(tx, []byte(","))
 	if len(txElements) == 0 {
@@ -159,14 +150,12 @@ func Serilization(tx []byte) (uint32, TransactionType) {
 		case string(kv[0]) == "nonce":
 			temp_value64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
 			tx_json.Nonce = uint32(temp_value64)
-		default:
-			return 1, tx_json
 		}
 	}
 	return 0, tx_json
 }
 
-func Deserilization(tx TransactionType) (uint32, []byte) {
+func Deserilization(tx haechitypes.TransactionType) (uint32, []byte) {
 	var tempStr string = ""
 	tempStr += "type="
 	tempStr += strconv.Itoa(int(tx.Tx_type))
@@ -184,7 +173,7 @@ func Deserilization(tx TransactionType) (uint32, []byte) {
 	return 0, tx_byte
 }
 
-func ResolveTx(_tx []byte) (uint32, TransactionType) {
+func ResolveTx(_tx []byte) (uint32, haechitypes.TransactionType) {
 	isValid, tx := Serilization(_tx)
 	if isValid != 0 {
 		return 1, tx

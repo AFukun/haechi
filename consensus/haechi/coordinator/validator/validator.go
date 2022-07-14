@@ -94,15 +94,14 @@ func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, leader boo
 }
 
 func (nw *ValidatorInterface) GlobalOrdering() {
-	var shard_id int = 0
-	for _, current_ccl := range nw.currentCCLs {
-		if current_ccl.Call_txs.Size() == 0 {
-			shard_id++
+	for shard_id := uint(0); shard_id < uint(nw.shard_num); shard_id++ {
+		ccl_size := nw.currentCCLs[shard_id].Call_txs.Size()
+		if ccl_size == 0 {
 			continue
 		}
-		temp_cls := make([]haechitypes.CrossLink, current_ccl.Call_txs.Size())
-		for k := uint(0); k < uint(current_ccl.Call_txs.Size()); k++ {
-			temp_tx, _ := current_ccl.Call_txs.Dequeue()
+		temp_cls := make([]haechitypes.CrossLink, ccl_size)
+		for k := uint(0); k < uint(ccl_size); k++ {
+			temp_tx, _ := nw.currentCCLs[shard_id].Call_txs.Dequeue()
 			cl_tx := temp_tx.(haechitypes.CrossLink)
 			temp_cls[k] = cl_tx
 		}
@@ -117,7 +116,6 @@ func (nw *ValidatorInterface) GlobalOrdering() {
 		for j := uint(0); j < uint(len(temp_cls)); j++ {
 			nw.currentCCLs[shard_id].Call_txs.Enqueue(temp_cls[j])
 		}
-		shard_id++
 	}
 }
 
@@ -126,7 +124,11 @@ func (nw *ValidatorInterface) DeliverCallList(shard_id uint8) {
 	for i := uint(0); !nw.currentCCLs[shard_id].Call_txs.Empty(); i++ {
 		temp_tx, _ := nw.currentCCLs[shard_id].Call_txs.Dequeue()
 		cl_tx := temp_tx.(haechitypes.CrossLink)
-		tx_string += "type=5"
+		tx_string += "fromid="
+		tx_string += strconv.Itoa(int(cl_tx.From_shard))
+		tx_string += ",toid="
+		tx_string += strconv.Itoa(int(cl_tx.To_shard))
+		tx_string += ",type=5"
 		tx_string += ",from="
 		tx_string += string(cl_tx.From)
 		tx_string += ",to="
@@ -139,14 +141,16 @@ func (nw *ValidatorInterface) DeliverCallList(shard_id uint8) {
 		tx_string += strconv.Itoa(int(cl_tx.Nonce))
 		tx_string += ">"
 	}
-	receiver_addr := net.JoinHostPort(nw.output_shards_addrs[shard_id].Ip.String(), strconv.Itoa(int(nw.output_shards_addrs[shard_id].Port)))
-	request := receiver_addr
-	request += "/broadcast_tx_commit?tx=\""
-	request += tx_string
-	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
+	if tx_string != "" {
+		receiver_addr := net.JoinHostPort(nw.output_shards_addrs[shard_id].Ip.String(), strconv.Itoa(int(nw.output_shards_addrs[shard_id].Port)))
+		request := receiver_addr
+		request += "/broadcast_tx_commit?tx=\""
+		request += tx_string
+		request += "\""
+		_, err := http.Get("http://" + request)
+		if err != nil {
+			fmt.Println("Error: deliver execution tx error when request a curl")
+		}
 	}
 }
 
@@ -160,16 +164,17 @@ func (nw *ValidatorInterface) DeliverCallLists() {
 func (nw *ValidatorInterface) FormCCLs() {
 	nw.UpdateTimestampRange()
 	var cls_size int
-	for _, cls := range nw.ShardCLMsgs {
-		cls_size = cls.CL.Size()
+	for i := uint(0); i < uint(nw.shard_num); i++ {
+		cls_size = nw.ShardCLMsgs[i].CL.Size()
 		for j := uint(0); j < uint(cls_size); j++ {
-			cl_temp, _ := cls.CL.Dequeue()
+			cl_temp, _ := nw.ShardCLMsgs[i].CL.Dequeue()
 			cl := cl_temp.(haechitypes.CrossLink)
 			if cl.Block_timestamp > nw.ValidTSRange[1] {
 				// advanced cross link
-				cls.CL.Enqueue(cl)
+				log.Println("This is an advanced ccl")
+				nw.ShardCLMsgs[i].CL.Enqueue(cl)
 			} else {
-				nw.currentCCLs[cl.Shard_id].Call_txs.Enqueue(cl)
+				nw.currentCCLs[cl.To_shard].Call_txs.Enqueue(cl)
 			}
 		}
 	}
@@ -195,7 +200,6 @@ func (nw *ValidatorInterface) UpdateOrderParameters(request []byte) {
 	if nw.ShardNextTS[shardid] < nw.min_next_TS {
 		nw.min_next_TS = nw.ShardNextTS[shardid]
 	}
-	// nw.UpdateTimestampRange()
 }
 
 func (nw *ValidatorInterface) UpdateTimestampRange() {

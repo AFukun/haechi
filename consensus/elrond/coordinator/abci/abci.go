@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"log"
 	"strconv"
 
 	elrondNode "github.com/AFukun/haechi/consensus/elrond/coordinator/validator"
+	haechitypes "github.com/AFukun/haechi/core/types"
 	abcicode "github.com/tendermint/tendermint/abci/example/code"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
-	// "github.com/dgraph-io/badger/v3"
 )
 
 var (
@@ -47,14 +48,10 @@ func (ElrondApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo 
 }
 
 func (app *ElrondApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
-	fmt.Println("Elrond: Intra_shard CheckTx...")
-	// code, _ := elrondNode.ResolveTx(req.Tx)
 	return abcitypes.ResponseCheckTx{Code: abcicode.CodeTypeOK, GasWanted: 1}
 }
 
 func (app *ElrondApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
-	fmt.Println("Elrond: Intra_shard BeginBlock...")
-	// app.intraTxBatch = app.Node.BCState.Database.NewTransaction(true)
 	return abcitypes.ResponseBeginBlock{}
 }
 
@@ -72,7 +69,6 @@ func (app *ElrondApplication) DeliverTx2(req abcitypes.RequestDeliverTx) abcityp
 	if err != nil {
 		panic(err)
 	}
-	// app.state.Size++
 
 	events := []abcitypes.Event{
 		{
@@ -90,12 +86,11 @@ func (app *ElrondApplication) DeliverTx2(req abcitypes.RequestDeliverTx) abcityp
 }
 
 func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	fmt.Println("Elrond: Intra_shard DeliverTx...")
 	_, tx_json := elrondNode.ResolveTx(req.Tx)
 	var err1, err2 error
 	var events []abcitypes.Event
 	var event_type string
-	new_tx := elrondNode.TransactionType{
+	new_tx := haechitypes.TransactionType{
 		Tx_type: tx_json.Tx_type,
 		From:    tx_json.From,
 		To:      tx_json.To,
@@ -103,13 +98,13 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 		Data:    tx_json.Data,
 	}
 	if tx_json.Tx_type == elrondNode.IntraShard_TX {
-		// fmt.Println("This is an intra-shard transaction")
+		log.Println("This is an intra-shard transaction")
 		event_type = "intra-shard transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 		app.Node.BCState.Size++
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Verify {
-		// fmt.Println("This is a verification transaction")
+		log.Println("This is a verification transaction")
 		event_type = "inter-shard verification transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("lock"))
 		new_tx.Tx_type = elrondNode.InterShard_TX_Execute
@@ -119,7 +114,7 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 		}
 
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Execute {
-		// fmt.Println("This is an execution transaction")
+		log.Println("This is an execution transaction")
 		event_type = "inter-shard execution transaction"
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("lock"))
 		new_tx.Tx_type = elrondNode.InterShard_TX_Commit
@@ -128,7 +123,7 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 			go app.Node.DeliverCommitTx(commit_tx)
 		}
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Commit {
-		// fmt.Println("This is a commit transaction")
+		log.Println("This is a commit transaction")
 		event_type = "inter-shard commit transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
 		new_tx.Tx_type = elrondNode.InterShard_TX_Update
@@ -137,7 +132,7 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 			go app.Node.DeliverUpdateTx(update_tx)
 		}
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Update {
-		// fmt.Println("This is an update transaction")
+		fmt.Println("This is an update transaction")
 		event_type = "inter-shard update transaction"
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 		app.Node.BCState.Size++
@@ -160,15 +155,10 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 }
 
 func (app *ElrondApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
-	fmt.Println("Elrond: Intra_shard EndBlock...")
 	return abcitypes.ResponseEndBlock{}
 }
 
 func (app *ElrondApplication) Commit() abcitypes.ResponseCommit {
-	fmt.Println("Elrond: Intra_shard Commit...")
-	// if err := app.intraTxBatch.Commit(); err != nil {
-	// 	log.Panicf("Error writing to database, unable to commit block: %v", err)
-	// }
 	appHash := make([]byte, 8)
 	binary.PutVarint(appHash, app.Node.BCState.Size)
 	app.Node.BCState.AppHash = appHash

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 
+	haechitypes "github.com/AFukun/haechi/core/types"
 	dbm "github.com/tendermint/tm-db"
 )
 
@@ -48,50 +49,41 @@ func NewBlockchainState(name string, dir string) *BlockchainState {
 	return &bcstate
 }
 
+type HaechiAddress struct {
+	Ip   net.IP
+	Port uint16
+}
 type ValidatorInterface struct {
-	BCState           *BlockchainState
-	Shard_id          uint8
-	Leader            bool
-	ip_input_shard    net.IP // own IP
-	port_input_shard  uint16
-	ip_output_shard   net.IP // beaconchain IP
-	port_output_shard uint16
-	Current_cl        string
+	BCState             *BlockchainState
+	shard_num           uint8
+	Shard_id            uint8
+	Leader              bool
+	input_addr          HaechiAddress
+	output_shards_addrs []HaechiAddress
+	Current_cl          string
 }
 
-func NewValidatorInterface(bcstate *BlockchainState, shard_id uint8, leader bool, ip_in net.IP, port_in uint16, ip_out net.IP, port_out uint16) *ValidatorInterface {
-	return &ValidatorInterface{
-		BCState:           bcstate,
-		Shard_id:          shard_id,
-		Leader:            leader,
-		ip_input_shard:    ip_in,
-		port_input_shard:  port_in,
-		ip_output_shard:   ip_out,
-		port_output_shard: port_out,
-		Current_cl:        "",
+func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, shard_id uint8, leader bool, in_addr HaechiAddress, out_addrs []HaechiAddress) *ValidatorInterface {
+	var new_validator ValidatorInterface
+	new_validator.BCState = bcstate
+	new_validator.shard_num = shard_num
+	new_validator.Shard_id = shard_id
+	new_validator.Leader = leader
+	new_validator.input_addr = in_addr
+	new_validator.output_shards_addrs = make([]HaechiAddress, shard_num)
+	for i := uint8(0); i < shard_num; i++ {
+		new_validator.output_shards_addrs[i].Ip = out_addrs[i].Ip
+		new_validator.output_shards_addrs[i].Port = out_addrs[i].Port
 	}
-}
-
-func (nw *ValidatorInterface) DeliverExecutionTx(tx []byte) {
-	tx_str := string(tx)
-	receiver_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
-	request := receiver_addr
-	request += "/broadcast_tx_commit?tx=\""
-	request += tx_str
-	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
-	}
+	return &new_validator
 }
 
 func (nw *ValidatorInterface) DeliverCrossLink(blockts int64, cl string) {
-
 	tx_str := "blocktimestamp="
 	tx_str += strconv.Itoa(int(blockts))
 	tx_str += ","
 	tx_str += cl
-	receiver_addr := net.JoinHostPort(nw.ip_input_shard.String(), strconv.Itoa(int(nw.port_input_shard)))
+	receiver_addr := net.JoinHostPort(nw.input_addr.Ip.String(), strconv.Itoa(int(nw.input_addr.Port)))
 	request := "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
@@ -101,9 +93,9 @@ func (nw *ValidatorInterface) DeliverCrossLink(blockts int64, cl string) {
 	}
 }
 
-func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
+func (nw *ValidatorInterface) DeliverCommitTx(tx []byte, shardid uint8) {
 	tx_str := string(tx)
-	sender_addr := net.JoinHostPort(nw.ip_input_shard.String(), strconv.Itoa(int(nw.port_input_shard)))
+	sender_addr := net.JoinHostPort(nw.output_shards_addrs[shardid].Ip.String(), strconv.Itoa(int(nw.output_shards_addrs[shardid].Port)))
 	request := sender_addr
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
@@ -114,9 +106,9 @@ func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
 	}
 }
 
-func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte) {
+func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte, shardid uint8) {
 	tx_str := string(tx)
-	receiver_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
+	receiver_addr := net.JoinHostPort(nw.output_shards_addrs[shardid].Ip.String(), strconv.Itoa(int(nw.output_shards_addrs[shardid].Port)))
 	request := receiver_addr
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
@@ -127,17 +119,8 @@ func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte) {
 	}
 }
 
-type TransactionType struct {
-	Tx_type uint8
-	From    []byte
-	To      []byte
-	Value   uint32
-	Data    []byte
-	Nonce   uint32 // TODO: enable contineous tx requests by setting vary nonce
-}
-
-func Serilization(tx []byte) (uint32, TransactionType) {
-	var tx_json TransactionType
+func Serilization(tx []byte) (uint32, haechitypes.TransactionType) {
+	var tx_json haechitypes.TransactionType
 	txElements := bytes.Split(tx, []byte(","))
 	if len(txElements) == 0 {
 		return 1, tx_json
@@ -145,9 +128,18 @@ func Serilization(tx []byte) (uint32, TransactionType) {
 	for _, txElement := range txElements {
 		kv := bytes.Split(txElement, []byte("="))
 		switch {
+		case string(kv[0]) == "fromid":
+			temp_type64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
+			tx_json.From_shard = uint8(temp_type64)
+		case string(kv[0]) == "toid":
+			temp_type64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
+			tx_json.To_shard = uint8(temp_type64)
 		case string(kv[0]) == "type":
 			temp_type64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
 			tx_json.Tx_type = uint8(temp_type64)
+			if tx_json.Tx_type == 5 {
+				return 0, tx_json
+			}
 		case string(kv[0]) == "from":
 			tx_json.From = make([]byte, Addr_Length)
 			copy(tx_json.From, kv[1])
@@ -155,7 +147,6 @@ func Serilization(tx []byte) (uint32, TransactionType) {
 			tx_json.To = make([]byte, Addr_Length)
 			copy(tx_json.To, kv[1])
 		case string(kv[0]) == "value":
-			// temp_value := string(kv[1])
 			temp_value64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
 			tx_json.Value = uint32(temp_value64)
 		case string(kv[0]) == "data":
@@ -164,16 +155,18 @@ func Serilization(tx []byte) (uint32, TransactionType) {
 		case string(kv[0]) == "nonce":
 			temp_value64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
 			tx_json.Nonce = uint32(temp_value64)
-			// default:
-			// 	return 1, tx_json
 		}
 	}
 	return 0, tx_json
 }
 
-func Deserilization(tx TransactionType) (uint32, []byte) {
+func Deserilization(tx haechitypes.TransactionType) (uint32, []byte) {
 	var tempStr string = ""
-	tempStr += "type="
+	tempStr += "fromid="
+	tempStr += strconv.Itoa(int(tx.From_shard))
+	tempStr += ",toid="
+	tempStr += strconv.Itoa(int(tx.To_shard))
+	tempStr += ",type="
 	tempStr += strconv.Itoa(int(tx.Tx_type))
 	tempStr += ",from="
 	tempStr += string(tx.From)
@@ -189,7 +182,7 @@ func Deserilization(tx TransactionType) (uint32, []byte) {
 	return 0, tx_byte
 }
 
-func ResolveTx(_tx []byte) (uint32, TransactionType) {
+func ResolveTx(_tx []byte) (uint32, haechitypes.TransactionType) {
 	isValid, tx := Serilization(_tx)
 	if isValid != 0 {
 		return 1, tx
