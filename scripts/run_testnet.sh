@@ -1,11 +1,10 @@
 GOSRC=$GOPATH/src
 TEST_SCENE="example"
-TM_HOME="$HOME/.example"
+TM_HOME="/tmp/$TEST_SCENE"
 WORKSPACE="$GOSRC/github.com/AFukun/haechi"
 CURRENT_DATE=`date +"%Y-%m-%d-%H-%M"`
 LOG_DIR="$WORKSPACE/tmplog/$TEST_SCENE-$CURRENT_DATE"
 DURATION=30
-
 
 rm -rf $TM_HOME/*
 mkdir -p $TM_HOME
@@ -23,4 +22,6 @@ echo "testnet launched"
 echo "running for ${DURATION}s..."
 sleep $DURATION
 pkill -9 example
+
+rm -rf $TM_HOME/*
 echo "all done"
