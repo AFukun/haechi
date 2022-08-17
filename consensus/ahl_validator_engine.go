@@ -61,9 +61,9 @@ func (e *AhlValidatorEngine) Excute() {
 func (e *AhlValidatorEngine) Communicate() {
 	if e.coordinatorIP != "" {
 		for _, tx := range e.intershardBatch {
-			err := tools.SendTxString(e.coordinatorIP, tx.EncodeToString())
+			_, err := tools.SendTxString(e.coordinatorIP, tx.EncodeToString())
 			if err != nil {
-				log.Error("failed to send cross-shard tx", "err", err)
+				log.Error("failed to send cross-shard tx", "ip", e.coordinatorIP, "err", err)
 			}
 		}
 	}
