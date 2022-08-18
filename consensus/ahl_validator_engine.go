@@ -14,6 +14,7 @@ type AhlValidatorEngine struct {
 	intershardBatch []types.AhlTx
 	pendingTxHash   map[common.Hash]struct{}
 	coordinatorIP   string
+	logger          log.Logger
 }
 
 func NewAhlValidatorEngine(coordinatorIP string) *AhlValidatorEngine {
@@ -23,6 +24,7 @@ func NewAhlValidatorEngine(coordinatorIP string) *AhlValidatorEngine {
 		intershardBatch: []types.AhlTx{},
 		pendingTxHash:   make(map[common.Hash]struct{}),
 		coordinatorIP:   coordinatorIP,
+		logger:          log.New("ahl"),
 	}
 }
 
@@ -30,7 +32,7 @@ func NewAhlValidatorEngine(coordinatorIP string) *AhlValidatorEngine {
 // 0: validated
 // 1: error
 func (e *AhlValidatorEngine) Validate(txs string) uint32 {
-	tx, err := types.DecodeAhlTxString(txs)
+	tx, err := types.DecodeAhlTxBase64String(txs)
 	if err != nil {
 		return 1
 	}
@@ -61,9 +63,9 @@ func (e *AhlValidatorEngine) Excute() {
 func (e *AhlValidatorEngine) Communicate() {
 	if e.coordinatorIP != "" {
 		for _, tx := range e.intershardBatch {
-			_, err := tools.SendTxString(e.coordinatorIP, tx.EncodeToString())
+			_, err := tools.SendTxString(e.coordinatorIP, tx.EncodeToBase64String())
 			if err != nil {
-				log.Error("failed to send cross-shard tx", "ip", e.coordinatorIP, "err", err)
+				e.logger.Error("failed to send cross-shard tx", "ip", e.coordinatorIP, "err", err)
 			}
 		}
 	}

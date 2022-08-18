@@ -4,7 +4,8 @@ DURATION=30
 
 TM_HOME="/tmp/$TEST_SCENE"
 WORKSPACE="$(go env GOPATH)/src/github.com/AFukun/haechi"
-EXEC="$WORKSPACE/build/$TEST_SCENE"
+NODE_EXEC="$WORKSPACE/build/$TEST_SCENE"
+CLIENT_EXEC="${NODE_EXEC}_client"
 CURRENT_DATE=`date +"%Y-%m-%d-%H-%M"`
 LOG_DIR="$WORKSPACE/tmplog/$TEST_SCENE-$CURRENT_DATE"
 
@@ -31,13 +32,13 @@ do
     do
         NODE_HOME="$TM_HOME/$SHARD/node$j"
         LOG_FILE="$LOG_DIR/$SHARD/node$j.log"
-        $EXEC -home $NODE_HOME -node-type $NODE_TYPE &> $LOG_FILE &
+        $NODE_EXEC -home $NODE_HOME -node-type $NODE_TYPE &> $LOG_FILE &
     done
 done
 echo "ahl launched"
 
-sleep 3
-${EXEC}_client &> $LOG_DIR/$SHARD/client.log &
+sleep 5
+$CLIENT_EXEC &> $LOG_DIR/$SHARD/client.log &
 echo "client launched"
 
 echo "running for ${DURATION}s..."
