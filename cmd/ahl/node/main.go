@@ -67,7 +67,7 @@ func main() {
 		log.Fatalf("Loading genesis document: %v", err)
 	}
 
-	logger := tmlog.MustNewDefaultLogger(tmlog.LogFormatPlain, tmlog.LogLevelInfo, false)
+	logger := tmlog.MustNewDefaultLogger(tmlog.LogFormatPlain, tmlog.LogLevelError, false)
 	node, err := nm.New(config, logger, acc, gf)
 	if err != nil {
 		log.Fatalf("Creating node: %v", err)

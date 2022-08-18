@@ -25,8 +25,7 @@ func (app *AhlValidatorApplication) DeliverTx(req abcitypes.RequestDeliverTx) ab
 }
 
 func (app *AhlValidatorApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
-	code := app.engine.Validate(string(req.Tx))
-	return abcitypes.ResponseCheckTx{Code: code}
+	return abcitypes.ResponseCheckTx{Code: 0}
 }
 
 func (app *AhlValidatorApplication) Commit() abcitypes.ResponseCommit {
@@ -40,14 +39,17 @@ func (AhlValidatorApplication) Query(abcitypes.RequestQuery) abcitypes.ResponseQ
 }
 
 func (AhlValidatorApplication) InitChain(abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
+
 	return abcitypes.ResponseInitChain{}
 }
 
-func (AhlValidatorApplication) BeginBlock(abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
+func (app *AhlValidatorApplication) BeginBlock(abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
+	app.engine.BeginBlock()
 	return abcitypes.ResponseBeginBlock{}
 }
 
-func (AhlValidatorApplication) EndBlock(abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+func (app *AhlValidatorApplication) EndBlock(abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+	app.engine.EndBlock()
 	return abcitypes.ResponseEndBlock{}
 }
 

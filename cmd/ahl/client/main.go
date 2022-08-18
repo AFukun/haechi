@@ -23,7 +23,7 @@ func main() {
 				From:      FROM,
 				To:        TO,
 				FromShard: 1,
-				ToStard:   1,
+				ToStard:   2,
 				Value:     1,
 				Data:      1,
 				Nonce:     uint32(i),

@@ -19,9 +19,9 @@ func New(module string) Logger {
 }
 
 func (l *Logger) write(typ string, msg string, args ...interface{}) {
-	line := fmt.Sprintf("%s %s", typ, msg)
+	line := fmt.Sprintf("%s %s module=%s", typ, msg, l.module)
 	for i := 0; i < len(args)/2; i++ {
-		line = fmt.Sprintf("%s modedule=%s %s=%v", line, l.module, args[2*i], args[2*i+1])
+		line = fmt.Sprintf("%s %s=%v", line, args[2*i], args[2*i+1])
 	}
 	l.writer.Println(line)
 }
