@@ -5,7 +5,6 @@ go 1.17
 require (
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/emirpasic/gods v1.18.1
-	github.com/gogo/protobuf v1.3.2
 	github.com/spf13/viper v1.12.0
 	github.com/tendermint/tendermint v0.35.7
 	github.com/tendermint/tm-db v0.6.6
@@ -25,6 +24,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-kit/kit v0.12.0 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

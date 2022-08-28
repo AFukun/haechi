@@ -13,9 +13,9 @@ import (
 
 	"github.com/spf13/viper"
 
-	elrondapp "github.com/AFukun/haechi/consensus/elrond/coordinator/abci"
+	ahlshardapp "github.com/AFukun/haechi/consensus/ahl/shard/abci"
 
-	elrondnode "github.com/AFukun/haechi/consensus/elrond/coordinator/validator"
+	ahlshardnode "github.com/AFukun/haechi/consensus/ahl/shard/validator"
 	abciclient "github.com/tendermint/tendermint/abci/client"
 	cfg "github.com/tendermint/tendermint/config"
 	tmlog "github.com/tendermint/tendermint/libs/log"
@@ -23,8 +23,6 @@ import (
 	"github.com/tendermint/tendermint/types"
 )
 
-// var homeDir, isLeader string
-// var localPort, remotePort uint
 var homeDir, isLeader, remotePorts string
 var localPort, shardNum, shardid uint
 
@@ -64,41 +62,34 @@ func main() {
 	}
 
 	dbPath := filepath.Join(homeDir, "leveldb")
-	// fmt.Println("path database is: " + dbPath)
-	db := elrondnode.NewBlockchainState("leveldb", dbPath)
-	// db, err := dbm.NewGoLevelDBWithOpts
-	// db := dbm.NewMemDB()
-	// db, err := badger.Open(badger.DefaultOptions(dbPath))
-	// if err != nil {
-	// 	log.Fatalf("Opening database: %v", err)
-	// }
+	db := ahlshardnode.NewBlockchainState("leveldb", dbPath)
 	defer func() {
 		if err := db.Database.Close(); err != nil {
 			log.Fatalf("Closing database: %v", err)
 		}
 	}()
-	var validatorInterface *elrondnode.ValidatorInterface
-	in_ip_temp := elrondnode.HaechiAddress{
+	var validatorInterface *ahlshardnode.ValidatorInterface
+	in_ip_temp := ahlshardnode.HaechiAddress{
 		Ip:   []byte{127, 0, 0, 1},
 		Port: uint16(localPort),
 	}
-	out_ips_temps := make([]elrondnode.HaechiAddress, shardNum)
+	out_ips_temps := make([]ahlshardnode.HaechiAddress, shardNum)
 	out_ports_temp := []byte(remotePorts)
 	out_ports := bytes.Split(out_ports_temp, []byte(","))
 	for i, out_port := range out_ports {
 		temp_value64, _ := strconv.ParseUint(string(out_port), 10, 64)
-		out_ips_temps[i] = elrondnode.HaechiAddress{
+		out_ips_temps[i] = ahlshardnode.HaechiAddress{
 			Ip:   []byte{127, 0, 0, 1},
 			Port: uint16(temp_value64),
 		}
 	}
 	if isLeader == "true" {
-		validatorInterface = elrondnode.NewValidatorInterface(db, uint8(shardNum), uint8(shardid), true, in_ip_temp, out_ips_temps)
+		validatorInterface = ahlshardnode.NewValidatorInterface(db, uint8(shardNum), uint8(shardid), true, in_ip_temp, out_ips_temps)
 	} else if isLeader == "false" {
-		validatorInterface = elrondnode.NewValidatorInterface(db, uint8(shardNum), uint8(shardid), false, in_ip_temp, out_ips_temps)
+		validatorInterface = ahlshardnode.NewValidatorInterface(db, uint8(shardNum), uint8(shardid), false, in_ip_temp, out_ips_temps)
 	}
 
-	app := elrondapp.NewElrondApplication(validatorInterface)
+	app := ahlshardapp.NewAhlShardApplication(validatorInterface)
 	acc := abciclient.NewLocalCreator(app)
 
 	logger := tmlog.MustNewDefaultLogger(tmlog.LogFormatPlain, tmlog.LogLevelInfo, false)

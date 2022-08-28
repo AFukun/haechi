@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	ahlNode "github.com/AFukun/haechi/consensus/ahl/coordinator/validator"
+	ahlNode "github.com/AFukun/haechi/consensus/ahl/shard/validator"
 	abcicode "github.com/tendermint/tendermint/abci/example/code"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
@@ -21,39 +21,40 @@ func prefixKey(key []byte) []byte {
 	return append(kvPairPrefixKey, key...)
 }
 
-var _ abcitypes.Application = (*AhlBeaconApplication)(nil)
+var _ abcitypes.Application = (*AhlShardApplication)(nil)
 
-type AhlBeaconApplication struct {
+type AhlShardApplication struct {
 	abcitypes.BaseApplication
 	// mu   sync.Mutex
 	Node *ahlNode.ValidatorInterface
 	// intraTxBatch *badger.Txn
 }
 
-func NewAhlBeaconApplication(node *ahlNode.ValidatorInterface) *AhlBeaconApplication {
-	return &AhlBeaconApplication{
+func NewAhlShardApplication(node *ahlNode.ValidatorInterface) *AhlShardApplication {
+	return &AhlShardApplication{
 		Node: node,
 	}
 }
 
-func (AhlBeaconApplication) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
+func (AhlShardApplication) InitChain(req abcitypes.RequestInitChain) abcitypes.ResponseInitChain {
 	return abcitypes.ResponseInitChain{}
 }
 
-func (AhlBeaconApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
+func (AhlShardApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo {
 	return abcitypes.ResponseInfo{}
 }
 
-func (app *AhlBeaconApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
+func (app *AhlShardApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
 	return abcitypes.ResponseCheckTx{Code: abcicode.CodeTypeOK, GasWanted: 1}
 }
 
-func (app *AhlBeaconApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
+func (app *AhlShardApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcitypes.ResponseBeginBlock {
 	return abcitypes.ResponseBeginBlock{}
 }
 
-func (app *AhlBeaconApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
+func (app *AhlShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	_, tx_json := ahlNode.ResolveTx(req.Tx)
+	var err1, err2 error
 	var events []abcitypes.Event
 	var event_type string
 	new_tx := ahlNode.TransactionType{
@@ -79,35 +80,38 @@ func (app *AhlBeaconApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcit
 		TX_id:      tx_json.TX_id,
 	}
 	if tx_json.Tx_type == ahlNode.InterShard_TX_Verify {
-		log.Println("This is a verification transaction")
+		log.Println("This is a verification transaction in sender shard")
 		event_type = "inter-shard verification transaction"
-		_, cs_tx := ahlNode.Deserilization(new_tx)
+		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("lock"))
+		new_tx.Tx_type = ahlNode.InterShard_TX_Execute
+		new_tx1.Tx_type = ahlNode.InterShard_TX_Commit_sender
+		_, exe_tx := ahlNode.Deserilization(new_tx)
+		_, com_tx := ahlNode.Deserilization(new_tx1)
 		if app.Node.Leader {
-			go app.Node.DeliverCrossShardTx(cs_tx, new_tx.From_shard)
+			go app.Node.DeliverExecutionTx(exe_tx, new_tx.To_shard)
+			go app.Node.DeliverCommitTx(com_tx)
 		}
-	} else if tx_json.Tx_type == ahlNode.InterShard_TX_Commit_sender {
-		log.Println("This is a commit transaction from sender")
-		event_type = "sender commit verification transaction"
-		app.Node.Tx_set[tx_json.TX_id%ahlNode.Process_Length] += 1
-	} else if tx_json.Tx_type == ahlNode.InterShard_TX_Commit_receiver {
-		log.Println("This is a commit transaction from receiver")
-		event_type = "receiver commit verification transaction"
-		app.Node.Tx_set[tx_json.TX_id%ahlNode.Process_Length] += 1
-	}
-
-	if app.Node.Tx_set[tx_json.TX_id%ahlNode.Process_Length] >= 2 {
-		log.Println("Beacon chain commits a transaction")
-		app.Node.Tx_set[tx_json.TX_id%ahlNode.Process_Length] = 0
-		new_tx.Tx_type = ahlNode.InterShard_TX_Update_sender
-		new_tx1.Tx_type = ahlNode.InterShard_TX_Update_receiver
-		_, update_sender_tx := ahlNode.Deserilization(new_tx)
-		_, update_receiver_tx := ahlNode.Deserilization(new_tx1)
+	} else if tx_json.Tx_type == ahlNode.InterShard_TX_Execute {
+		log.Println("This is an execution transaction")
+		event_type = "inter-shard execution transaction"
+		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("lock"))
+		new_tx.Tx_type = ahlNode.InterShard_TX_Commit_receiver
+		_, com_tx := ahlNode.Deserilization(new_tx)
 		if app.Node.Leader {
-			go app.Node.DeliverCommitTx(update_sender_tx, new_tx.From_shard)
-			go app.Node.DeliverCommitTx(update_receiver_tx, new_tx.To_shard)
+			go app.Node.DeliverCommitTx(com_tx)
 		}
+	} else if tx_json.Tx_type == ahlNode.InterShard_TX_Update_sender {
+		log.Println("This is an update transaction in sender shard")
+		event_type = "inter-shard update transaction"
+		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
+	} else if tx_json.Tx_type == ahlNode.InterShard_TX_Update_receiver {
+		log.Println("This is an update transaction in receiver shard")
+		event_type = "inter-shard update transaction"
+		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 	}
-
+	if err1 != nil || err2 != nil {
+		panic(err1)
+	}
 	events = []abcitypes.Event{
 		{
 			Type: event_type,
@@ -122,11 +126,11 @@ func (app *AhlBeaconApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcit
 	return abcitypes.ResponseDeliverTx{Code: abcicode.CodeTypeOK, Events: events}
 }
 
-func (app *AhlBeaconApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
+func (app *AhlShardApplication) EndBlock(req abcitypes.RequestEndBlock) abcitypes.ResponseEndBlock {
 	return abcitypes.ResponseEndBlock{}
 }
 
-func (app *AhlBeaconApplication) Commit() abcitypes.ResponseCommit {
+func (app *AhlShardApplication) Commit() abcitypes.ResponseCommit {
 	appHash := make([]byte, 8)
 	binary.PutVarint(appHash, app.Node.BCState.Size)
 	app.Node.BCState.AppHash = appHash
@@ -134,7 +138,7 @@ func (app *AhlBeaconApplication) Commit() abcitypes.ResponseCommit {
 	return abcitypes.ResponseCommit{Data: []byte{}}
 }
 
-func (app *AhlBeaconApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
+func (app *AhlShardApplication) Query(reqQuery abcitypes.RequestQuery) (resQuery abcitypes.ResponseQuery) {
 	if reqQuery.Prove {
 		value, err := app.Node.BCState.Database.Get(prefixKey(reqQuery.Data))
 		if err != nil {
@@ -148,7 +152,7 @@ func (app *AhlBeaconApplication) Query(reqQuery abcitypes.RequestQuery) (resQuer
 		resQuery.Index = -1 // TODO make Proof return index
 		resQuery.Key = reqQuery.Data
 		resQuery.Value = value
-		resQuery.Height = app.Node.BCState.Height
+		resQuery.Height = int64(app.Node.BCState.Height)
 
 		return
 	}
@@ -164,7 +168,7 @@ func (app *AhlBeaconApplication) Query(reqQuery abcitypes.RequestQuery) (resQuer
 		resQuery.Log = "exists"
 	}
 	resQuery.Value = value
-	resQuery.Height = app.Node.BCState.Height
+	resQuery.Height = int64(app.Node.BCState.Height)
 
 	return resQuery
 }

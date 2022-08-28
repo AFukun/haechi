@@ -1,9 +1,7 @@
 package abci
 
 import (
-	"bytes"
 	"encoding/binary"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -55,47 +53,19 @@ func (app *ElrondApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcity
 	return abcitypes.ResponseBeginBlock{}
 }
 
-func (app *ElrondApplication) DeliverTx2(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	var key, value string
-
-	parts := bytes.Split(req.Tx, []byte("="))
-	if len(parts) == 2 {
-		key, value = string(parts[0]), string(parts[1])
-	} else {
-		key, value = string(req.Tx), string(req.Tx)
-	}
-
-	err := app.Node.BCState.Database.Set(prefixKey([]byte(key)), []byte(value))
-	if err != nil {
-		panic(err)
-	}
-
-	events := []abcitypes.Event{
-		{
-			Type: "app",
-			Attributes: []abcitypes.EventAttribute{
-				{Key: "creator", Value: "Cosmoshi Netowoko", Index: true},
-				{Key: "key", Value: key, Index: true},
-				{Key: "index_key", Value: "index is working", Index: true},
-				{Key: "noindex_key", Value: "index is working", Index: false},
-			},
-		},
-	}
-
-	return abcitypes.ResponseDeliverTx{Code: abcicode.CodeTypeOK, Events: events}
-}
-
 func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
 	_, tx_json := elrondNode.ResolveTx(req.Tx)
 	var err1, err2 error
 	var events []abcitypes.Event
 	var event_type string
 	new_tx := haechitypes.TransactionType{
-		Tx_type: tx_json.Tx_type,
-		From:    tx_json.From,
-		To:      tx_json.To,
-		Value:   tx_json.Value,
-		Data:    tx_json.Data,
+		From_shard: tx_json.From_shard,
+		To_shard:   tx_json.To_shard,
+		Tx_type:    tx_json.Tx_type,
+		From:       tx_json.From,
+		To:         tx_json.To,
+		Value:      tx_json.Value,
+		Data:       tx_json.Data,
 	}
 	if tx_json.Tx_type == elrondNode.IntraShard_TX {
 		log.Println("This is an intra-shard transaction")
@@ -110,7 +80,7 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 		new_tx.Tx_type = elrondNode.InterShard_TX_Execute
 		_, exec_tx := elrondNode.Deserilization(new_tx)
 		if app.Node.Leader {
-			go app.Node.DeliverExecutionTx(exec_tx)
+			go app.Node.DeliverExecutionTx(exec_tx, new_tx.To_shard)
 		}
 
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Execute {
@@ -120,7 +90,7 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 		new_tx.Tx_type = elrondNode.InterShard_TX_Commit
 		_, commit_tx := elrondNode.Deserilization(new_tx)
 		if app.Node.Leader {
-			go app.Node.DeliverCommitTx(commit_tx)
+			go app.Node.DeliverCommitTx(commit_tx, new_tx.From_shard)
 		}
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Commit {
 		log.Println("This is a commit transaction")
@@ -129,10 +99,10 @@ func (app *ElrondApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitype
 		new_tx.Tx_type = elrondNode.InterShard_TX_Update
 		_, update_tx := elrondNode.Deserilization(new_tx)
 		if app.Node.Leader {
-			go app.Node.DeliverUpdateTx(update_tx)
+			go app.Node.DeliverUpdateTx(update_tx, new_tx.To_shard)
 		}
 	} else if tx_json.Tx_type == elrondNode.InterShard_TX_Update {
-		fmt.Println("This is an update transaction")
+		log.Println("This is an update transaction")
 		event_type = "inter-shard update transaction"
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 		app.Node.BCState.Size++

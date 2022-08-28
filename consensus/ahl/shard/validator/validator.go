@@ -2,44 +2,43 @@ package validator
 
 import (
 	"bytes"
-	"encoding/binary"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"strconv"
 
-	haechitypes "github.com/AFukun/haechi/core/types"
+	aq "github.com/emirpasic/gods/queues/arrayqueue"
 	dbm "github.com/tendermint/tm-db"
 )
 
-/*
-A transaction is defined as a json including:
-{
-	tx_type uint32
-	from	[20]byte
-	to		[20]byte
-	value	uint32
-	data	[20]byte
-}
-e.g., sent by user as: "type=0,from=ABCD,to=DCBA,value=0,data=NONE"
-*/
 const (
-	Addr_Length uint8 = 4
-	Data_Length uint8 = 4
+	Addr_Length    uint8  = 4
+	Data_Length    uint8  = 4
+	Process_Length uint32 = 2000
 )
 const (
-	Type_Num              uint8 = 5
-	IntraShard_TX         uint8 = 0
-	InterShard_TX_Verify  uint8 = 1
-	InterShard_TX_Execute uint8 = 2
-	InterShard_TX_Commit  uint8 = 3
-	InterShard_TX_Update  uint8 = 4
+	Type_Num                      uint8 = 7
+	IntraShard_TX                 uint8 = 0
+	InterShard_TX_Verify          uint8 = 1
+	InterShard_TX_Execute         uint8 = 2
+	InterShard_TX_Commit_sender   uint8 = 3
+	InterShard_TX_Commit_receiver uint8 = 4
+	InterShard_TX_Update_sender   uint8 = 5
+	InterShard_TX_Update_receiver uint8 = 6
 )
 
-// var (
-// 	stateKey = []byte("stateKey")
-// )
+type TransactionType struct {
+	From_shard uint8 // the sender's shard
+	To_shard   uint8 // the receiver's shard
+	Tx_type    uint8
+	From       []byte
+	To         []byte
+	Value      uint32
+	Data       []byte
+	Nonce      uint32 // TODO: enable contineous tx requests by setting vary nonce
+	TX_id      uint32
+}
 
 type BlockchainState struct {
 	Database dbm.DB
@@ -51,9 +50,8 @@ type BlockchainState struct {
 func NewBlockchainState(name string, dir string) *BlockchainState {
 	var bcstate BlockchainState
 	var err error
-	// bcstate, _ := loadState(dbm.DB.(name, dir))
 	bcstate.Database, err = dbm.NewDB(name, dbm.GoLevelDBBackend, dir)
-	bcstate.Height = 0
+	bcstate.Height = 1
 	bcstate.Size = 0
 	if err != nil {
 		log.Fatalf("Create database error: %v", err)
@@ -61,10 +59,15 @@ func NewBlockchainState(name string, dir string) *BlockchainState {
 	return &bcstate
 }
 
+type ShardCrosslinkMsg struct {
+	CL *aq.Queue // queue used to store CrossLink
+}
+
 type HaechiAddress struct {
 	Ip   net.IP
 	Port uint16
 }
+
 type ValidatorInterface struct {
 	BCState             *BlockchainState
 	shard_num           uint8
@@ -72,6 +75,7 @@ type ValidatorInterface struct {
 	Leader              bool
 	input_addr          HaechiAddress
 	output_shards_addrs []HaechiAddress
+	Tx_set              [Process_Length]uint8
 }
 
 func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, shard_id uint8, leader bool, in_addr HaechiAddress, out_addrs []HaechiAddress) *ValidatorInterface {
@@ -85,6 +89,9 @@ func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, shard_id u
 	for i := uint8(0); i < shard_num; i++ {
 		new_validator.output_shards_addrs[i].Ip = out_addrs[i].Ip
 		new_validator.output_shards_addrs[i].Port = out_addrs[i].Port
+	}
+	for i := uint32(0); i < Process_Length; i++ {
+		new_validator.Tx_set[i] = 0
 	}
 	return &new_validator
 }
@@ -102,9 +109,9 @@ func (nw *ValidatorInterface) DeliverExecutionTx(tx []byte, shardid uint8) {
 	}
 }
 
-func (nw *ValidatorInterface) DeliverCommitTx(tx []byte, shardid uint8) {
+func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
 	tx_str := string(tx)
-	sender_addr := net.JoinHostPort(nw.output_shards_addrs[shardid].Ip.String(), strconv.Itoa(int(nw.output_shards_addrs[shardid].Port)))
+	sender_addr := net.JoinHostPort(nw.input_addr.Ip.String(), strconv.Itoa(int(nw.input_addr.Port)))
 	request := sender_addr
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
@@ -115,22 +122,8 @@ func (nw *ValidatorInterface) DeliverCommitTx(tx []byte, shardid uint8) {
 	}
 }
 
-func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte, shardid uint8) {
-	// output_addr := net.JoinHostPort(nw.ip_output_shard.String(), strconv.Itoa(int(nw.port_output_shard)))
-	tx_str := string(tx)
-	receiver_addr := net.JoinHostPort(nw.output_shards_addrs[shardid].Ip.String(), strconv.Itoa(int(nw.output_shards_addrs[shardid].Port)))
-	request := receiver_addr
-	request += "/broadcast_tx_commit?tx=\""
-	request += tx_str
-	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
-	}
-}
-
-func Serilization(tx []byte) (uint32, haechitypes.TransactionType) {
-	var tx_json haechitypes.TransactionType
+func Serilization(tx []byte) (uint32, TransactionType) {
+	var tx_json TransactionType
 	// tx_json.Tx_type = 4
 	txElements := bytes.Split(tx, []byte(","))
 	if len(txElements) == 0 {
@@ -148,9 +141,6 @@ func Serilization(tx []byte) (uint32, haechitypes.TransactionType) {
 		case string(kv[0]) == "type":
 			temp_type64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
 			tx_json.Tx_type = uint8(temp_type64)
-			if tx_json.Tx_type == 5 {
-				return 0, tx_json
-			}
 		case string(kv[0]) == "from":
 			tx_json.From = make([]byte, Addr_Length)
 			copy(tx_json.From, kv[1])
@@ -167,12 +157,15 @@ func Serilization(tx []byte) (uint32, haechitypes.TransactionType) {
 		case string(kv[0]) == "nonce":
 			temp_value64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
 			tx_json.Nonce = uint32(temp_value64)
+		case string(kv[0]) == "txid":
+			temp_value64, _ := strconv.ParseUint(string(kv[1]), 10, 64)
+			tx_json.TX_id = uint32(temp_value64)
 		}
 	}
 	return 0, tx_json
 }
 
-func Deserilization(tx haechitypes.TransactionType) (uint32, []byte) {
+func Deserilization(tx TransactionType) (uint32, []byte) {
 	var tempStr string = ""
 	tempStr += "fromid="
 	tempStr += strconv.Itoa(int(tx.From_shard))
@@ -190,11 +183,13 @@ func Deserilization(tx haechitypes.TransactionType) (uint32, []byte) {
 	tempStr += string(tx.Data)
 	tempStr += ",nonce="
 	tempStr += strconv.Itoa(int(tx.Nonce))
+	tempStr += ",txid="
+	tempStr += strconv.Itoa(int(tx.TX_id))
 	tx_byte := []byte(tempStr)
 	return 0, tx_byte
 }
 
-func ResolveTx(_tx []byte) (uint32, haechitypes.TransactionType) {
+func ResolveTx(_tx []byte) (uint32, TransactionType) {
 	isValid, tx := Serilization(_tx)
 	if isValid != 0 {
 		return 1, tx
@@ -206,27 +201,4 @@ func ResolveTx(_tx []byte) (uint32, haechitypes.TransactionType) {
 	}
 	// txType := IntraShard_TX
 	// return txType
-}
-
-func GetTxType(_tx []byte) uint8 {
-	_, tx := Serilization(_tx)
-	return tx.Tx_type
-}
-
-func AddOperation(add []byte, value uint32) []byte {
-	temp_add := binary.BigEndian.Uint32(add)
-	temp_add += value
-	buf := bytes.NewBuffer([]byte{})
-	binary.Write(buf, binary.BigEndian, temp_add)
-	return buf.Bytes()
-}
-
-func SubOperation(minuend []byte, value uint32) []byte {
-	temp_minuend := binary.BigEndian.Uint32(minuend)
-	if temp_minuend >= value {
-		temp_minuend -= value
-	}
-	buf := bytes.NewBuffer([]byte{})
-	binary.Write(buf, binary.BigEndian, temp_minuend)
-	return buf.Bytes()
 }

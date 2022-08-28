@@ -6,6 +6,9 @@ build:
 run_testnet:
 	bash ./scripts/run_testnet.sh
 
+run_ahltest:
+	bash ./scripts/run_ahl.sh
+
 run_elrondtest:
 	bash ./scripts/run_elrond.sh
 
