@@ -227,7 +227,7 @@ external-address = ""
 bootstrap-peers = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent-peers = "381ce50234600bc2273ae5d357b4f60e545bfb0f@127.0.0.2:20156"
+persistent-peers = "381ce50234600bc2273ae5d357b4f60e545bfb0f@127.0.0.1:20156"
 
 # UPNP port forwarding
 upnp = false

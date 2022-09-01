@@ -4,7 +4,7 @@ TM_HOME="$HOME/.haechiElrond"
 WORKSPACE="$GOSRC/github.com/AFukun/haechi"
 CURRENT_DATE=`date +"%Y-%m-%d-%H-%M"`
 LOG_DIR="$WORKSPACE/tmplog/$TEST_SCENE-$CURRENT_DATE"
-DURATION=10
+DURATION=60
 
 
 rm -rf $TM_HOME/*

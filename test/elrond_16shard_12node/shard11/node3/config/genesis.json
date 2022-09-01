@@ -1,0 +1,151 @@
+{
+  "genesis_time": "2022-08-31T02:36:07.220844568Z",
+  "chain_id": "chain-saNKwA",
+  "initial_height": "0",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1"
+    },
+    "evidence": {
+      "max_age_num_blocks": "100000",
+      "max_age_duration": "172800000000000",
+      "max_bytes": "1048576"
+    },
+    "validator": {
+      "pub_key_types": [
+        "ed25519"
+      ]
+    },
+    "version": {
+      "app_version": "0"
+    },
+    "synchrony": {
+      "precision": "505000000",
+      "message_delay": "12000000000"
+    },
+    "timeout": {
+      "propose": "3000000000",
+      "propose_delta": "500000000",
+      "vote": "1000000000",
+      "vote_delta": "500000000",
+      "commit": "1000000000",
+      "bypass_commit_timeout": false
+    },
+    "abci": {
+      "vote_extensions_enable_height": 0,
+      "recheck_tx": true
+    }
+  },
+  "validators": [
+    {
+      "address": "ED4315E0BA730CEF0C80D4932C09A4F7CE503E19",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "WPSrlnEfRibb16Gik7e2hkHgNWxN6JFeFJb1Hao3OtQ="
+      },
+      "power": "1",
+      "name": "node0"
+    },
+    {
+      "address": "322DA93098249B4112BBD4BCD90A35A7D0B73EE4",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "4UrCw5bOHFDbe0+soG0yJ3Bde6hsiH+2/IJFcN3T5ls="
+      },
+      "power": "1",
+      "name": "node1"
+    },
+    {
+      "address": "089C13595500202613A0C0B9CDBC71B434F27C18",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "s7i/1jxDi9SUPKEZQv3E714970sCmDzxAid1buB8k2s="
+      },
+      "power": "1",
+      "name": "node2"
+    },
+    {
+      "address": "7DAC426F2CA92EE9B6117CA460EC67294AB078A2",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "XgBPQR++nfujCVK+rrSHn5sPcJiBbUZ+dOMvJ/YlZGw="
+      },
+      "power": "1",
+      "name": "node3"
+    },
+    {
+      "address": "3CE9B84C46E3E27D5BCBD06C0922D884F2CAC913",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "v9Jqa+j0coxZ/lUGcZxY7cjsD7oC8/KcSjhjEjQbbHg="
+      },
+      "power": "1",
+      "name": "node4"
+    },
+    {
+      "address": "A0902EEB738FD3233BCC2B0356E9939EE3D9E2AB",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "Kg0sccbJn/BYLVSC52n5/Q6qieekHYcGH1az0J1SDiI="
+      },
+      "power": "1",
+      "name": "node5"
+    },
+    {
+      "address": "43770733D56846A071839A3CEA2353E9121A7110",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "mpyszrEm/d/9KycBYvAiM1Tku6PLl0Z6yx/PeHyJP/c="
+      },
+      "power": "1",
+      "name": "node6"
+    },
+    {
+      "address": "EA5805C5232C8BFAA630E16BBEE70D0C52D4251F",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "aiKxLvJcUDXATVxpQpqo7eQq8Hvtx6UciUNFbUVOq8o="
+      },
+      "power": "1",
+      "name": "node7"
+    },
+    {
+      "address": "9FDF691FB8565CB82F6A94526E2E8F5474A49336",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "YYl9HhDyN5QHi1FZ62wiMxMLWyVhsUe179Zu2nZdjKw="
+      },
+      "power": "1",
+      "name": "node8"
+    },
+    {
+      "address": "A025456E0F5C6891A5922142F6D80E31CB6DBBE4",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "90+1SxY03WMXOBsyL7Wz0k+lFgSlJEEdlHV9DJPX5zg="
+      },
+      "power": "1",
+      "name": "node9"
+    },
+    {
+      "address": "FD5587A60B5C1BA2440D6504FE72910146F0F8D8",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "IMneQRFmFV06zCaFlrTqFsJqsJjrecSjRaNc6kawt+k="
+      },
+      "power": "1",
+      "name": "node10"
+    },
+    {
+      "address": "D5EE9190B38DFE6FA63F9442578FF0DD5DFCE138",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "MP50PVgCySWbh0kN++/7Qy9ILFkMVPsqebBKainoukM="
+      },
+      "power": "1",
+      "name": "node11"
+    }
+  ],
+  "app_hash": ""
+}

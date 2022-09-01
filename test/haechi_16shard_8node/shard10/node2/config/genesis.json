@@ -1,0 +1,115 @@
+{
+  "genesis_time": "2022-08-31T02:33:54.786782883Z",
+  "chain_id": "chain-WUGAvW",
+  "initial_height": "0",
+  "consensus_params": {
+    "block": {
+      "max_bytes": "22020096",
+      "max_gas": "-1"
+    },
+    "evidence": {
+      "max_age_num_blocks": "100000",
+      "max_age_duration": "172800000000000",
+      "max_bytes": "1048576"
+    },
+    "validator": {
+      "pub_key_types": [
+        "ed25519"
+      ]
+    },
+    "version": {
+      "app_version": "0"
+    },
+    "synchrony": {
+      "precision": "505000000",
+      "message_delay": "12000000000"
+    },
+    "timeout": {
+      "propose": "3000000000",
+      "propose_delta": "500000000",
+      "vote": "1000000000",
+      "vote_delta": "500000000",
+      "commit": "1000000000",
+      "bypass_commit_timeout": false
+    },
+    "abci": {
+      "vote_extensions_enable_height": 0,
+      "recheck_tx": true
+    }
+  },
+  "validators": [
+    {
+      "address": "166CDCFBE3701BF57869186C72FE283D93B47868",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "VavoOPhk5IRqbEe/0GW3X0bJE+rAnC2m7wHEkcp0DFA="
+      },
+      "power": "1",
+      "name": "node0"
+    },
+    {
+      "address": "6047FD957FE4EEC18B1DC3B101744B505FE86007",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "5H13LfQTggws6SI/R/HnRn7rIsBIq3q9PXOASZo+cNw="
+      },
+      "power": "1",
+      "name": "node1"
+    },
+    {
+      "address": "0E1AFD7B6D806037E425C54ACAD3A540C3857FE0",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "QJMUkOw2LySi+XzEpqFxSFYYOLTnEJI2IWlAKV3VCRY="
+      },
+      "power": "1",
+      "name": "node2"
+    },
+    {
+      "address": "4112862679146EE41F835E82897BB5A8AD9021C2",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "ahtzR0fu/APnAbXFltRs5A48LstdiVM9pr/uKHjNIcw="
+      },
+      "power": "1",
+      "name": "node3"
+    },
+    {
+      "address": "2FE0D2728AEF96F6FD63D89D9978CCF97BD84A21",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "qzQXRE3OHxs50wGHIFWffWUKIkWOv8Y4MrExjlXyjXI="
+      },
+      "power": "1",
+      "name": "node4"
+    },
+    {
+      "address": "3388E1BB670CCB3BD7D617339FECF7FC35C999AD",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "FYYfByIi2kBNZv1XebdFdwzcztZUIgMYaSo3++Xo8e0="
+      },
+      "power": "1",
+      "name": "node5"
+    },
+    {
+      "address": "71BFF5080428736C24D4C21F94DAC2A175E0F673",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "ytUZkdl0gOE/6o7VRZu+CR9KOSoLCUu7fLlOh+kXolc="
+      },
+      "power": "1",
+      "name": "node6"
+    },
+    {
+      "address": "9D53DDBDA8402338649F0C04490E366FBB8D9662",
+      "pub_key": {
+        "type": "tendermint/PubKeyEd25519",
+        "value": "wSNqbXo+7E7MrUggaxgZr2au4ISTf86sLEWhu/5f21w="
+      },
+      "power": "1",
+      "name": "node7"
+    }
+  ],
+  "app_hash": ""
+}
