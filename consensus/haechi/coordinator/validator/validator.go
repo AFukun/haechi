@@ -2,7 +2,6 @@ package validator
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"math"
 	"net"
@@ -57,6 +56,7 @@ type ValidatorInterface struct {
 	shard_num           uint8
 	currentCCLs         haechitypes.CrossShardCallLists
 	min_next_TS         int64
+	Start_Order         bool
 }
 
 func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, leader bool, in_addr HaechiAddress, out_addrs []HaechiAddress) *ValidatorInterface {
@@ -90,12 +90,15 @@ func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, leader boo
 		new_validator.currentCCLs[i].Call_txs = aq.New()
 	}
 	new_validator.min_next_TS = math.MaxInt64
+	new_validator.Start_Order = true
 	return &new_validator
 }
 
 func (nw *ValidatorInterface) GlobalOrdering() {
 	for shard_id := uint(0); shard_id < uint(nw.shard_num); shard_id++ {
 		ccl_size := nw.currentCCLs[shard_id].Call_txs.Size()
+		// // tln("beacon shardid is: " + fmt.Sprint(shard_id))
+		// // tln("beacon ccls txs number is: " + fmt.Sprint(ccl_size))
 		if ccl_size == 0 {
 			continue
 		}
@@ -147,10 +150,11 @@ func (nw *ValidatorInterface) DeliverCallList(shard_id uint8) {
 		request += "/broadcast_tx_commit?tx=\""
 		request += tx_string
 		request += "\""
-		_, err := http.Get("http://" + request)
-		if err != nil {
-			fmt.Println("Error: deliver execution tx error when request a curl")
-		}
+		http.Get("http://" + request)
+		// _, err := http.Get("http://" + request)
+		// if err != nil {
+		// 	fmt.Println("Error: deliver execution tx error when request a curl")
+		// }
 	}
 }
 
@@ -159,23 +163,32 @@ func (nw *ValidatorInterface) DeliverCallLists() {
 	for i := uint8(0); i < nw.shard_num; i++ {
 		nw.DeliverCallList(i)
 	}
+	if nw.StartOrder() {
+		nw.Start_Order = true
+	}
+
 }
 
 func (nw *ValidatorInterface) FormCCLs() {
 	nw.UpdateTimestampRange()
 	var cls_size int
 	for i := uint(0); i < uint(nw.shard_num); i++ {
+		if nw.ShardCLMsgs[i].CL.Empty() {
+			continue
+		}
 		cls_size = nw.ShardCLMsgs[i].CL.Size()
+		// // tln("beacon formccls, cls size is: " + fmt.Sprint(cls_size))
 		for j := uint(0); j < uint(cls_size); j++ {
 			cl_temp, _ := nw.ShardCLMsgs[i].CL.Dequeue()
 			cl := cl_temp.(haechitypes.CrossLink)
 			if cl.Block_timestamp > nw.ValidTSRange[1] {
 				// advanced cross link
-				log.Println("This is an advanced ccl")
+				// // tln("This is an advanced ccl")
 				nw.ShardCLMsgs[i].CL.Enqueue(cl)
 			} else {
 				nw.currentCCLs[cl.To_shard].Call_txs.Enqueue(cl)
 			}
+			// nw.currentCCLs[cl.To_shard].Call_txs.Enqueue(cl)
 		}
 	}
 	nw.GlobalOrdering()

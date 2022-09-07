@@ -2,7 +2,6 @@ package validator
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -15,7 +14,7 @@ import (
 const (
 	Addr_Length    uint8  = 4
 	Data_Length    uint8  = 4
-	Process_Length uint32 = 2000
+	Process_Length uint32 = 20000
 )
 const (
 	Type_Num                      uint8 = 7
@@ -101,10 +100,11 @@ func (nw *ValidatorInterface) DeliverCrossShardTx(tx []byte, shardid uint8) {
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
-	}
+	http.Get("http://" + request)
+	// _, err := http.Get("http://" + request)
+	// if err != nil {
+	// 	fmt.Println("Error: deliver execution tx error when request a curl")
+	// }
 }
 
 func (nw *ValidatorInterface) DeliverCommitTx(tx []byte, shardid uint8) {
@@ -114,10 +114,11 @@ func (nw *ValidatorInterface) DeliverCommitTx(tx []byte, shardid uint8) {
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver commit tx error when request a curl")
-	}
+	http.Get("http://" + request)
+	// _, err := http.Get("http://" + request)
+	// if err != nil {
+	// 	fmt.Println("Error: deliver execution tx error when request a curl")
+	// }
 }
 
 func Serilization(tx []byte) (uint32, TransactionType) {

@@ -2,7 +2,8 @@ package abci
 
 import (
 	"encoding/binary"
-	"log"
+
+	// "log"
 	"strconv"
 
 	ahlNode "github.com/AFukun/haechi/consensus/ahl/coordinator/validator"
@@ -45,6 +46,8 @@ func (AhlBeaconApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseIn
 }
 
 func (app *AhlBeaconApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
+	// tln("beacon receive tx " + string(req.Tx))
+	// tln("beacon receive tx, current time is: " + time.Now().String())
 	return abcitypes.ResponseCheckTx{Code: abcicode.CodeTypeOK, GasWanted: 1}
 }
 
@@ -79,24 +82,24 @@ func (app *AhlBeaconApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcit
 		TX_id:      tx_json.TX_id,
 	}
 	if tx_json.Tx_type == ahlNode.InterShard_TX_Verify {
-		log.Println("This is a verification transaction")
+		// // tln("This is a verification transaction")
 		event_type = "inter-shard verification transaction"
 		_, cs_tx := ahlNode.Deserilization(new_tx)
 		if app.Node.Leader {
 			go app.Node.DeliverCrossShardTx(cs_tx, new_tx.From_shard)
 		}
 	} else if tx_json.Tx_type == ahlNode.InterShard_TX_Commit_sender {
-		log.Println("This is a commit transaction from sender")
+		// // tln("This is a commit transaction from sender")
 		event_type = "sender commit verification transaction"
 		app.Node.Tx_set[tx_json.TX_id%ahlNode.Process_Length] += 1
 	} else if tx_json.Tx_type == ahlNode.InterShard_TX_Commit_receiver {
-		log.Println("This is a commit transaction from receiver")
+		// // tln("This is a commit transaction from receiver")
 		event_type = "receiver commit verification transaction"
 		app.Node.Tx_set[tx_json.TX_id%ahlNode.Process_Length] += 1
 	}
 
 	if app.Node.Tx_set[tx_json.TX_id%ahlNode.Process_Length] >= 2 {
-		log.Println("Beacon chain commits a transaction")
+		// // tln("Beacon chain commits a transaction")
 		app.Node.Tx_set[tx_json.TX_id%ahlNode.Process_Length] = 0
 		new_tx.Tx_type = ahlNode.InterShard_TX_Update_sender
 		new_tx1.Tx_type = ahlNode.InterShard_TX_Update_receiver

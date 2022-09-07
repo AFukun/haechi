@@ -17,7 +17,7 @@ func main() {
 	//go create_request()
 	tx_num := 10
 	cross_rate := float32(0.9)
-	shard_num := 16
+	shard_num := 14
 	for true {
 		// create the same number of txs for each shard, with the same cross shard rate
 		go send_request(20057, 10057, tx_num, 0, shard_num, cross_rate)
@@ -34,8 +34,8 @@ func main() {
 		go send_request(31057, 10057, tx_num, 11, shard_num, cross_rate)
 		go send_request(32057, 10057, tx_num, 12, shard_num, cross_rate)
 		go send_request(33057, 10057, tx_num, 13, shard_num, cross_rate)
-		go send_request(34057, 10057, tx_num, 14, shard_num, cross_rate)
-		go send_request(35057, 10057, tx_num, 15, shard_num, cross_rate)
+		// go send_request(34057, 10057, tx_num, 14, shard_num, cross_rate)
+		// go send_request(35057, 10057, tx_num, 15, shard_num, cross_rate)
 		time.Sleep(20 * time.Millisecond)
 	}
 	// time.Sleep(60*time.Second)

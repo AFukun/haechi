@@ -2,7 +2,6 @@ package validator
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -103,10 +102,11 @@ func (nw *ValidatorInterface) DeliverExecutionTx(tx []byte, shardid uint8) {
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
-	}
+	http.Get("http://" + request)
+	// _, _ := http.Get("http://" + request)
+	// if err != nil {
+	// 	fmt.Println("Error: deliver execution tx error when request a curl")
+	// }
 }
 
 func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
@@ -116,10 +116,10 @@ func (nw *ValidatorInterface) DeliverCommitTx(tx []byte) {
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
-	}
+	http.Get("http://" + request)
+	// if err != nil {
+	// 	fmt.Println("Error: deliver execution tx error when request a curl")
+	// }
 }
 
 func Serilization(tx []byte) (uint32, TransactionType) {

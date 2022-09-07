@@ -16,7 +16,7 @@ import (
 func main() {
 	//go create_request()
 	tx_num := 20
-	cross_rate := float32(0.5)
+	cross_rate := float32(0.9)
 	shard_num := 16
 	for true {
 		// create the same number of txs for each shard, with the same cross shard rate

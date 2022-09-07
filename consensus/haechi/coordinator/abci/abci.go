@@ -2,6 +2,8 @@ package abci
 
 import (
 	"encoding/binary"
+	// "log"
+	// "time"
 
 	haechiNode "github.com/AFukun/haechi/consensus/haechi/coordinator/validator"
 	abcicode "github.com/tendermint/tendermint/abci/example/code"
@@ -44,6 +46,9 @@ func (HaechiBeaconApplication) Info(req abcitypes.RequestInfo) abcitypes.Respons
 
 // receive: blocktimestamp=111000,fromid=1,toid=1,type=0,from=ABCD1,to=DCBA1,value=0,data=NONE,nonce=0,blockheight=1000,index=0>fromid=1,toid=2,type=0,from=ABCD1,to=DCBA2,value=0,data=NONE,nonce=1,blockheight=1000,index=1>
 func (app *HaechiBeaconApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
+	// tln("beacon receive tx " + string(req.Tx))
+	// tln("beacon receive tx, current time is: " + time.Now().String())
+	// // tln("receive a transaction:" + string(req.Tx))
 	app.Node.UpdateShardCrosslinkMsgs(req.Tx)
 	app.Node.UpdateOrderParameters(req.Tx)
 	return abcitypes.ResponseCheckTx{Code: abcicode.CodeTypeOK, GasWanted: 1}
@@ -58,8 +63,13 @@ func (app *HaechiBeaconApplication) BeginBlock(req abcitypes.RequestBeginBlock) 
 }
 
 func (app *HaechiBeaconApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	if app.Node.StartOrder() {
-		app.Node.DeliverCallLists()
+	if app.Node.StartOrder() && app.Node.Start_Order {
+		app.Node.Start_Order = false
+		// TODO: how to securely concurrently diliver call lists?
+		if app.Node.Leader {
+			go app.Node.DeliverCallLists()
+		}
+
 	}
 	var events []abcitypes.Event
 	// var event_type string

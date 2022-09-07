@@ -3,7 +3,6 @@ package validator
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -18,7 +17,7 @@ const (
 	Data_Length uint8 = 4
 )
 const (
-	Type_Num              uint8 = 5
+	Type_Num              uint8 = 6
 	IntraShard_TX         uint8 = 0
 	InterShard_TX_Verify  uint8 = 1
 	InterShard_TX_Execute uint8 = 2
@@ -87,10 +86,11 @@ func (nw *ValidatorInterface) DeliverCrossLink(blockts int64, cl string) {
 	request := "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	_, err := http.Get("http://" + receiver_addr + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
-	}
+	http.Get("http://" + receiver_addr + request)
+	// _, err := http.Get("http://" + receiver_addr + request)
+	// if err != nil {
+	// 	fmt.Println("Error: deliver execution tx error when request a curl")
+	// }
 }
 
 func (nw *ValidatorInterface) DeliverCommitTx(tx []byte, shardid uint8) {
@@ -100,10 +100,11 @@ func (nw *ValidatorInterface) DeliverCommitTx(tx []byte, shardid uint8) {
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
-	}
+	http.Get("http://" + request)
+	// _, err := http.Get("http://" + request)
+	// if err != nil {
+	// 	fmt.Println("Error: deliver commit tx error when request a curl")
+	// }
 }
 
 func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte, shardid uint8) {
@@ -113,10 +114,11 @@ func (nw *ValidatorInterface) DeliverUpdateTx(tx []byte, shardid uint8) {
 	request += "/broadcast_tx_commit?tx=\""
 	request += tx_str
 	request += "\""
-	_, err := http.Get("http://" + request)
-	if err != nil {
-		fmt.Println("Error: deliver execution tx error when request a curl")
-	}
+	http.Get("http://" + request)
+	// _, err := http.Get("http://" + request)
+	// if err != nil {
+	// 	fmt.Println("Error: deliver update tx error when request a curl")
+	// }
 }
 
 func Serilization(tx []byte) (uint32, haechitypes.TransactionType) {
