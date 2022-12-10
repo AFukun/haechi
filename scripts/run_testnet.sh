@@ -1,3 +1,4 @@
+source ~/.bashrc
 GOSRC=$GOPATH/src
 TEST_SCENE="example"
 TM_HOME="$HOME/.example"

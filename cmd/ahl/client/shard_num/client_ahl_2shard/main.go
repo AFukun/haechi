@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"net/http"
 	"sync"
-	"time"
 )
 
 // outport
@@ -36,7 +35,7 @@ func main() {
 		// go send_request(33057, 10057, tx_num, 13, shard_num, cross_rate)
 		// go send_request(34057, 10057, tx_num, 14, shard_num, cross_rate)
 		// go send_request(35057, 10057, tx_num, 15, shard_num, cross_rate)
-		time.Sleep(20 * time.Millisecond)
+		// time.Sleep(20 * time.Millisecond)
 	}
 	// time.Sleep(60*time.Second)
 }
@@ -82,10 +81,10 @@ func get_rand(upperBond int64) string {
 func send_request(shardport int, outport int, txNum int, fromid int, shard_num int, cross_rate float32) {
 	ctx_num := int(float32(txNum) * cross_rate)
 	for i := 0; i < int(txNum-ctx_num); i++ {
-		go http.Get(fmt.Sprintf("http://127.0.0.1:%v/broadcast_tx_commit?tx=\"fromid=%v,toid=%v,type=%v,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=%v,txid=%v\"", shardport, fromid, get_rand(int64(shard_num)), 0, get_rand(math.MaxInt64), i))
+		http.Get(fmt.Sprintf("http://127.0.0.1:%v/broadcast_tx_commit?tx=\"fromid=%v,toid=%v,type=%v,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=%v,txid=%v\"", shardport, fromid, get_rand(int64(shard_num)), 0, get_rand(math.MaxInt64), i))
 	}
 	for i := 0; i < ctx_num; i++ {
-		go http.Get(fmt.Sprintf("http://127.0.0.1:%v/broadcast_tx_commit?tx=\"fromid=%v,toid=%v,type=%v,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=%v,txid=%v\"", outport, fromid, get_rand(int64(shard_num)), 1, get_rand(math.MaxInt64), get_rand(20000)))
+		http.Get(fmt.Sprintf("http://127.0.0.1:%v/broadcast_tx_commit?tx=\"fromid=%v,toid=%v,type=%v,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=%v,txid=%v\"", outport, fromid, get_rand(int64(shard_num)), 1, get_rand(math.MaxInt64), get_rand(20000)))
 	}
 
 }

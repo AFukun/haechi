@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	haechitypes "github.com/AFukun/haechi/core/types"
+	hctypes "github.com/AFukun/haechi/types"
 	aq "github.com/emirpasic/gods/queues/arrayqueue"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -38,11 +38,6 @@ type ShardCrosslinkMsg struct {
 	CL *aq.Queue // queue used to store CrossLink
 }
 
-type HaechiAddress struct {
-	Ip   net.IP
-	Port uint16
-}
-
 type ValidatorInterface struct {
 	BCState             *BlockchainState
 	ShardCLMsgs         []ShardCrosslinkMsg
@@ -51,15 +46,15 @@ type ValidatorInterface struct {
 	ValidTSRange        [2]int64
 	ShardBlockLastTS    []int64
 	Leader              bool
-	input_addr          HaechiAddress
-	output_shards_addrs []HaechiAddress
+	input_addr          hctypes.HaechiAddress
+	output_shards_addrs []hctypes.HaechiAddress
 	shard_num           uint8
-	currentCCLs         haechitypes.CrossShardCallLists
+	currentCCLs         hctypes.CrossShardCallLists
 	min_next_TS         int64
 	Start_Order         bool
 }
 
-func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, leader bool, in_addr HaechiAddress, out_addrs []HaechiAddress) *ValidatorInterface {
+func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, leader bool, in_addr hctypes.HaechiAddress, out_addrs []hctypes.HaechiAddress) *ValidatorInterface {
 	var new_validator ValidatorInterface
 	new_validator.BCState = bcstate
 	new_validator.shard_num = shard_num
@@ -82,8 +77,8 @@ func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, leader boo
 	new_validator.ValidTSRange[1] = math.MaxInt64
 	new_validator.Leader = leader
 	new_validator.input_addr = in_addr
-	new_validator.output_shards_addrs = make([]HaechiAddress, shard_num)
-	new_validator.currentCCLs = make(haechitypes.CrossShardCallLists, shard_num)
+	new_validator.output_shards_addrs = make([]hctypes.HaechiAddress, shard_num)
+	new_validator.currentCCLs = make(hctypes.CrossShardCallLists, shard_num)
 	for i := uint8(0); i < shard_num; i++ {
 		new_validator.output_shards_addrs[i].Ip = out_addrs[i].Ip
 		new_validator.output_shards_addrs[i].Port = out_addrs[i].Port
@@ -102,10 +97,10 @@ func (nw *ValidatorInterface) GlobalOrdering() {
 		if ccl_size == 0 {
 			continue
 		}
-		temp_cls := make([]haechitypes.CrossLink, ccl_size)
+		temp_cls := make([]hctypes.CrossLink, ccl_size)
 		for k := uint(0); k < uint(ccl_size); k++ {
 			temp_tx, _ := nw.currentCCLs[shard_id].Call_txs.Dequeue()
-			cl_tx := temp_tx.(haechitypes.CrossLink)
+			cl_tx := temp_tx.(hctypes.CrossLink)
 			temp_cls[k] = cl_tx
 		}
 		sort.SliceStable(temp_cls, func(i, j int) bool {
@@ -126,7 +121,7 @@ func (nw *ValidatorInterface) DeliverCallList(shard_id uint8) {
 	tx_string := ""
 	for i := uint(0); !nw.currentCCLs[shard_id].Call_txs.Empty(); i++ {
 		temp_tx, _ := nw.currentCCLs[shard_id].Call_txs.Dequeue()
-		cl_tx := temp_tx.(haechitypes.CrossLink)
+		cl_tx := temp_tx.(hctypes.CrossLink)
 		tx_string += "fromid="
 		tx_string += strconv.Itoa(int(cl_tx.From_shard))
 		tx_string += ",toid="
@@ -180,7 +175,7 @@ func (nw *ValidatorInterface) FormCCLs() {
 		// // tln("beacon formccls, cls size is: " + fmt.Sprint(cls_size))
 		for j := uint(0); j < uint(cls_size); j++ {
 			cl_temp, _ := nw.ShardCLMsgs[i].CL.Dequeue()
-			cl := cl_temp.(haechitypes.CrossLink)
+			cl := cl_temp.(hctypes.CrossLink)
 			if cl.Block_timestamp > nw.ValidTSRange[1] {
 				// advanced cross link
 				// // tln("This is an advanced ccl")
@@ -196,7 +191,7 @@ func (nw *ValidatorInterface) FormCCLs() {
 
 func (nw *ValidatorInterface) UpdateShardCrosslinkMsgs(request []byte) {
 	shardid := CheckFromShardId(request)
-	_, crosslinks := haechitypes.RequestToCrossLinks(request)
+	_, crosslinks := hctypes.RequestToCrossLinks(request)
 	for _, crosslink := range crosslinks {
 		nw.ShardCLMsgs[shardid].CL.Enqueue(crosslink)
 	}

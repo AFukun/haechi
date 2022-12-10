@@ -2,11 +2,13 @@ package validator
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"strconv"
 
+	hctypes "github.com/AFukun/haechi/types"
 	aq "github.com/emirpasic/gods/queues/arrayqueue"
 	dbm "github.com/tendermint/tm-db"
 )
@@ -62,30 +64,27 @@ type ShardCrosslinkMsg struct {
 	CL *aq.Queue // queue used to store CrossLink
 }
 
-type HaechiAddress struct {
-	Ip   net.IP
-	Port uint16
-}
-
 type ValidatorInterface struct {
 	BCState             *BlockchainState
 	shard_num           uint8
 	Shard_id            uint8
 	Leader              bool
-	input_addr          HaechiAddress
-	output_shards_addrs []HaechiAddress
+	input_addr          hctypes.HaechiAddress
+	output_shards_addrs []hctypes.HaechiAddress
 	Tx_set              [Process_Length]uint8
 }
 
-func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, shard_id uint8, leader bool, in_addr HaechiAddress, out_addrs []HaechiAddress) *ValidatorInterface {
+func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, shard_id uint8, leader bool, in_addr hctypes.HaechiAddress, out_addrs []hctypes.HaechiAddress) *ValidatorInterface {
 	var new_validator ValidatorInterface
 	new_validator.BCState = bcstate
 	new_validator.shard_num = shard_num
 	new_validator.Shard_id = shard_id
 	new_validator.Leader = leader
 	new_validator.input_addr = in_addr
-	new_validator.output_shards_addrs = make([]HaechiAddress, shard_num)
+	new_validator.output_shards_addrs = make([]hctypes.HaechiAddress, shard_num)
 	for i := uint8(0); i < shard_num; i++ {
+		fmt.Println("abci, shard ip is", out_addrs[i].Ip)
+		fmt.Println("abci, shard port is", out_addrs[i].Port)
 		new_validator.output_shards_addrs[i].Ip = out_addrs[i].Ip
 		new_validator.output_shards_addrs[i].Port = out_addrs[i].Port
 	}

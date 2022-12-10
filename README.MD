@@ -62,7 +62,7 @@ make run_erlond_16shard_4node_test
 在build目录下输入
 
 ```zsh
-./erlondclient_elrond_16shard_4node
+./erlondclient_byshard_16shard_4node
 ```
 
 开始输入交易
@@ -113,21 +113,21 @@ make run_ahl_%dshard_4ode_test
 
 ## erlond
 
-调整cmd/erlond/client_elrond_%dshard中main.go的cross_rate为0.9
+调整cmd/erlond/client_byshard_%dshard中main.go的cross_rate为0.9
 
-%d对应shard的数目，如client_elrond_2shard, client_elrond_4shard
+%d对应shard的数目，如client_byshard_2shard, client_byshard_4shard
 
 ```zsh
 make build
 # 不同的shard数目，对应不同的%d，从2到16
-make run_elrond_%dshard_4ode_test
+make run_byshard_%dshard_4ode_test
 ```
 
 在build目录下输入
 
 ```zsh
 # 不同的shard数目，对应不同的%d，从2到16
-./elrondclient_erlond_%dshard_4node
+./byshardclient_erlond_%dshard_4node
 ```
 
 开始输入交易
@@ -174,19 +174,19 @@ make run_ahl_16shard_4ode_test
 
 ## erlond
 
-调整cmd/erlond/client_elrond_16shard中main.go的cross_rate为0.9
+调整cmd/erlond/client_byshard_16shard中main.go的cross_rate为0.9
 
 ```zsh
 make build
 # 不同的node数目，对应不同的%d，从4到20
-make run_elrond_16shard_%dnode_test
+make run_byshard_16shard_%dnode_test
 ```
 
 在build目录下输入
 
 ```zsh
 # 不同的node数目，对应不同的%d，从4到20
-./elrondclient_erlond_16shard_%dnode
+./byshardclient_erlond_16shard_%dnode
 ```
 
 开始输入交易

@@ -1,3 +1,4 @@
+source ~/.bashrc
 GOSRC=$GOPATH/src
 TEST_SCENE="haechi"
 TM_HOME="$HOME/.haechiOrder"

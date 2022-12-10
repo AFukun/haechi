@@ -9,8 +9,8 @@ run_testnet:
 run_ahltest:
 	bash ./scripts/run_ahl.sh
 
-run_elrondtest:
-	bash ./scripts/run_elrond.sh
+run_byshardtest:
+	bash ./scripts/run_byshard.sh
 
 run_haechitest:
 	bash ./scripts/run_haechi.sh
@@ -101,39 +101,39 @@ run_ahl_16shard_16node_test:
 run_ahl_16shard_20node_test:
 	bash ./scripts/run_ahl_16shard_20node.sh
 
-#elrond
-run_elrond_2shard_4node_test:
-	bash ./scripts/run_elrond_2shard_4node.sh
+#byshard
+run_byshard_2shard_4node_test:
+	bash ./scripts/run_byshard_2shard_4node.sh
 
-run_elrond_4shard_4node_test:
-	bash ./scripts/run_elrond_4shard_4node.sh
+run_byshard_4shard_4node_test:
+	bash ./scripts/run_byshard_4shard_4node.sh
 
-run_elrond_6shard_4node_test:
-	bash ./scripts/run_elrond_6shard_4node.sh
+run_byshard_6shard_4node_test:
+	bash ./scripts/run_byshard_6shard_4node.sh
 
-run_elrond_8shard_4node_test:
-	bash ./scripts/run_elrond_8shard_4node.sh
+run_byshard_8shard_4node_test:
+	bash ./scripts/run_byshard_8shard_4node.sh
 
-run_elrond_10shard_4node_test:
-	bash ./scripts/run_elrond_10shard_4node.sh
+run_byshard_10shard_4node_test:
+	bash ./scripts/run_byshard_10shard_4node.sh
 
-run_elrond_12shard_4node_test:
-	bash ./scripts/run_elrond_12shard_4node.sh
+run_byshard_12shard_4node_test:
+	bash ./scripts/run_byshard_12shard_4node.sh
 
-run_elrond_14shard_4node_test:
-	bash ./scripts/run_elrond_14shard_4node.sh
+run_byshard_14shard_4node_test:
+	bash ./scripts/run_byshard_14shard_4node.sh
 
-run_elrond_16shard_4node_test:
-	bash ./scripts/run_elrond_16shard_4node.sh
+run_byshard_16shard_4node_test:
+	bash ./scripts/run_byshard_16shard_4node.sh
 
-run_elrond_16shard_8node_test:
-	bash ./scripts/run_elrond_16shard_8node.sh
+run_byshard_16shard_8node_test:
+	bash ./scripts/run_byshard_16shard_8node.sh
 
-run_elrond_16shard_12node_test:
-	bash ./scripts/run_elrond_16shard_12node.sh
+run_byshard_16shard_12node_test:
+	bash ./scripts/run_byshard_16shard_12node.sh
 
-run_elrond_16shard_16node_test:
-	bash ./scripts/run_elrond_16shard_16node.sh
+run_byshard_16shard_16node_test:
+	bash ./scripts/run_byshard_16shard_16node.sh
 
-run_elrond_16shard_20node_test:
-	bash ./scripts/run_elrond_16shard_20node.sh
+run_byshard_16shard_20node_test:
+	bash ./scripts/run_byshard_16shard_20node.sh

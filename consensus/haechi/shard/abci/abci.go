@@ -7,7 +7,7 @@ import (
 	"time"
 
 	haechiNode "github.com/AFukun/haechi/consensus/haechi/shard/validator"
-	haechitypes "github.com/AFukun/haechi/core/types"
+	hctypes "github.com/AFukun/haechi/types"
 	abcicode "github.com/tendermint/tendermint/abci/example/code"
 	abcitypes "github.com/tendermint/tendermint/abci/types"
 )
@@ -81,11 +81,11 @@ func (app *HaechiShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abc
 		app.Node.Current_cl += ">"
 	} else if tx_json.Tx_type == haechiNode.CrossShard_Call_List {
 		// // tln("Receive a call list from beacon chain: " + string(req.Tx))
-		_, ccl_txs := haechitypes.TxToCCL(req.Tx, app.Node.Shard_id)
+		_, ccl_txs := hctypes.TxToCCL(req.Tx, app.Node.Shard_id)
 		index := ccl_txs.Call_txs.Size()
 		for i := uint(0); i < uint(index); i++ {
 			ccl_tx, _ := ccl_txs.Call_txs.Dequeue()
-			q_tx_json := ccl_tx.(haechitypes.TransactionType)
+			q_tx_json := ccl_tx.(hctypes.TransactionType)
 			// TODO: detect whether committing the transaction or not, label a tag
 			err1 = app.Node.BCState.Database.Set(prefixKey(q_tx_json.From), []byte("0"))
 			err2 = app.Node.BCState.Database.Set(prefixKey(q_tx_json.To), []byte("0"))
