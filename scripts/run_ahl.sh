@@ -62,12 +62,12 @@ for ((i=0;i<$SHARD_SIZE;i++))
 do
     if [ $i -eq 0 ]; then
         echo "running beacon leader"
-        ./build/ahlbc -home $TM_HOME/beacon/node$i -leader "true" -shards $SHARD_NUM -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS - &> $LOG_DIR/beaconnode$i.log &
+        ./build/ahlbc -home $TM_HOME/beacon/node$i -leader "true" -shards $SHARD_NUM -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/beaconnode$i.log &
     else
         echo "running beacon validator"
-        ./build/ahlbc -home $TM_HOME/beacon/node$i -leader "false" -shards $SHARD_NUM -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS - &> $LOG_DIR/beaconnode$i.log &
+        ./build/ahlbc -home $TM_HOME/beacon/node$i -leader "false" -shards $SHARD_NUM -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/beaconnode$i.log &
     fi
-    # sleep 2
+    sleep 1
 done
 
 # run shard node
