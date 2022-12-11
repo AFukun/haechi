@@ -21,16 +21,19 @@ $ make build
 
 ### client parameter description
 
-| client parameters | description            | default               |
-|-------------------|------------------------|-----------------------|
-| shards            | shard number           | 2                     |
-| beaconport        | beacon chain port      | 10057                 |
-| beaconip          | beacon chain ip        | "127.0.0.1"           |
-| shardports        | shard chain points     | "20057,21057"         |
-| shardips          | shard chain ips        | "127.0.0.2,127.0.0.3" |
-| batch             | batch size per request | 10                    |
-| rate              | sleeping time, ms      | 100                   |
-| ratio             | cross-shard txs ratio  | 0.8                   |
+| client parameters | description               | default               |
+|-------------------|---------------------------|-----------------------|
+| shards            | shard number              | 2                     |
+| beaconport        | beacon chain port         | 10057                 |
+| beaconip          | beacon chain ip           | "127.0.0.1"           |
+| shardports        | shard chain points        | "20057,21057"         |
+| shardips          | shard chain ips           | "127.0.0.2,127.0.0.3" |
+| batch             | batch size per request    | 10                    |
+| ratio             | cross-shard txs ratio     | 0.8                   |
+| parallel          | concurrent request number | 100                   |
+| duration          | execution duration, s     | 120                   |
+<!-- | rate              | sleeping time, ms         | 100                   | -->
+*Note: the default maximum number of connections of a node is 900*
 
 1. ahl test
 
