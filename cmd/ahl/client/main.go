@@ -1,24 +1,52 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rand"
+	"flag"
 	"fmt"
 	"math"
 	"math/big"
 	"net/http"
+	"strconv"
+	"time"
 )
 
+var shardNum, batchSize, beaconPort uint
+var requestRate int64
+var crossRate float64
+var shardPorts, beaconIp, shardIps string
+
+func init() {
+	flag.UintVar(&shardNum, "shards", 2, "the number of shards")
+	flag.UintVar(&batchSize, "batch", 10, "the batch size of one request")
+	flag.Int64Var(&requestRate, "rate", 100, "the request rate controlled by sleeping time, ms")
+	flag.Float64Var(&crossRate, "ratio", 0.8, "the ratio of cross-shard txs")
+
+	flag.UintVar(&beaconPort, "beaconport", 10057, "beacon chain port")
+	flag.StringVar(&shardPorts, "shardports", "20057,21057", "shards chain port")
+	flag.StringVar(&beaconIp, "beaconip", "127.0.0.1", "beacon chain ip")
+	flag.StringVar(&shardIps, "shardips", "127.0.0.1,127.0.0.1", "shards chain ip")
+}
+
 func main() {
-	/*send an cross-shard tx to beacon shard to call haechi contract managed in shard 1*/
-	/* curl -s '127.0.0.1:10057/broadcast_tx_commit?tx="fromid=0,toid=1,type=1,from=ABCD,to=DCBA,value=10,data=NONE,nonce=1,txid=0"' */
-	for true {
-		request1 := fmt.Sprintf("http://127.0.0.1:%v/broadcast_tx_commit?tx=\"fromid=%v,toid=%v,type=%v,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=%v,txid=%v\"", 20057, 0, 0, 0, get_rand(math.MaxInt64), get_rand(2000))
-		go http.Get(request1)
+	flag.Parse()
+	// initialize ip
+	shard_ports_temp := []byte(shardPorts)
+	shard_ports := bytes.Split(shard_ports_temp, []byte(","))
+	shard_ips_temp := []byte(shardIps)
+	shard_ips := bytes.Split(shard_ips_temp, []byte(","))
+	var ports_value64 []uint64
+	for _, shard_port := range shard_ports {
+		temp_port, _ := strconv.ParseUint(string(shard_port), 10, 64)
+		ports_value64 = append(ports_value64, temp_port)
 	}
-	/*send an cross-shard tx to beacon shard to call haechi contract managed in shard 0*/
-	/* curl -s '127.0.0.1:10057/broadcast_tx_commit?tx="fromid=1,toid=0,type=1,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=1,txid=1"' */
-	// request2 := "127.0.0.1:10057/broadcast_tx_commit?tx=\"fromid=1,toid=0,type=1,from=EFGH,to=WXYZ,value=20,data=NONE,nonce=1,txid=1\""
-	// http.Get("http://" + request2)
+	for true {
+		for i, _ := range shard_ports {
+			go send_request(uint(ports_value64[i]), string(shard_ips[i]), beaconPort, beaconIp, batchSize, uint(i), shardNum, crossRate)
+		}
+		time.Sleep(time.Duration(requestRate) * time.Millisecond)
+	}
 }
 
 func get_rand(upperBond int64) string {
@@ -29,4 +57,13 @@ func get_rand(upperBond int64) string {
 	}
 	outputRand := fmt.Sprintf("%v", i)
 	return outputRand
+}
+func send_request(s_port uint, s_ip string, b_port uint, b_ip string, tx_num uint, from_id uint, s_num uint, cross_rate float64) {
+	ctx_num := uint(float64(tx_num) * cross_rate)
+	for i := uint(0); i < tx_num-ctx_num; i++ {
+		http.Get(fmt.Sprintf("http://%v:%v/broadcast_tx_commit?tx=\"fromid=%v,toid=%v,type=%v,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=%v,txid=%v\"", s_ip, s_port, from_id, get_rand(int64(s_num)), 0, get_rand(math.MaxInt64), i))
+	}
+	for i := uint(0); i < ctx_num; i++ {
+		http.Get(fmt.Sprintf("http://%v:%v/broadcast_tx_commit?tx=\"fromid=%v,toid=%v,type=%v,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=%v,txid=%v\"", b_ip, b_port, from_id, get_rand(int64(s_num)), 1, get_rand(math.MaxInt64), get_rand(20000)))
+	}
 }

@@ -86,5 +86,4 @@ func send_request(shardport int, outport int, txNum int, fromid int, shard_num i
 	for i := 0; i < ctx_num; i++ {
 		http.Get(fmt.Sprintf("http://127.0.0.1:%v/broadcast_tx_commit?tx=\"fromid=%v,toid=%v,type=%v,from=EFGH,to=WXYZ,value=10,data=NONE,nonce=%v,txid=%v\"", outport, fromid, get_rand(int64(shard_num)), 1, get_rand(math.MaxInt64), get_rand(20000)))
 	}
-
 }

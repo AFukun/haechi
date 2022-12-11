@@ -2,7 +2,6 @@ package validator
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -83,8 +82,6 @@ func NewValidatorInterface(bcstate *BlockchainState, shard_num uint8, shard_id u
 	new_validator.input_addr = in_addr
 	new_validator.output_shards_addrs = make([]hctypes.HaechiAddress, shard_num)
 	for i := uint8(0); i < shard_num; i++ {
-		fmt.Println("abci, shard ip is", out_addrs[i].Ip)
-		fmt.Println("abci, shard port is", out_addrs[i].Port)
 		new_validator.output_shards_addrs[i].Ip = out_addrs[i].Ip
 		new_validator.output_shards_addrs[i].Port = out_addrs[i].Port
 	}

@@ -5,14 +5,14 @@ TM_HOME="$HOME/.haechibyshard"
 WORKSPACE="$GOSRC/github.com/AFukun/haechi"
 CURRENT_DATE=`date +"%Y-%m-%d-%H-%M"`
 LOG_DIR="$WORKSPACE/tmplog/$TEST_SCENE-$CURRENT_DATE"
-DURATION=60
+DURATION=120
 
 SHARD_NUM=2
 SHARD_SIZE=2
 BEACON_PORT=10057
 BEACON_IP="127.0.0.1"
 SHARD_PORTS="20057,21057"
-SHARD_IPS="127.0.0.2,127.0.0.3"
+SHARD_IPS="127.0.0.1,127.0.0.1"
 
 while getopts ":n:m:p:i:s:x:" opt
 do 

@@ -36,7 +36,7 @@ func init() {
 	flag.UintVar(&beaconPort, "beaconport", 10057, "beacon chain port")
 	flag.StringVar(&shardPorts, "shardports", "20057,21057", "shards chain port")
 	flag.StringVar(&beaconIp, "beaconip", "127.0.0.1", "beacon chain ip")
-	flag.StringVar(&shardIps, "shardips", "127.0.0.1, 127.0.0.1", "shards chain ip")
+	flag.StringVar(&shardIps, "shardips", "127.0.0.1,127.0.0.1", "shards chain ip")
 }
 
 func main() {
