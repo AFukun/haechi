@@ -6,7 +6,7 @@
 $ make build
 ```
 
-## test
+## Single machine test
 
 ### node parameter description
 
@@ -76,3 +76,15 @@ $ make build
 ```bash
 ./build/haechiclient -shards 2 -beaconport 10057 -beaconip "127.0.0.1" -shardports "20057,21057" -shardips "127.0.0.1,127.0.0.1" -batch 10 -rate 100 -ratio 0.8
 ```
+
+## Multiple machines test (e.g., with EC2)
+
+
+<!-- 
+Note: checkput to master to generate configs:
+1. 127.0.0.1 -> 0.0.0.0
+2. node listening port 266xx -> 20xxx
+3. indexer = ["null"] -> indexer = ["kv"]
+-->
+
+<!-- curl 'http://3.15.172.201:26657/broadcast_tx_commit?tx="fromid=0,toid=1,type=0,from=ABCD,to=DCBA,value=10,data=NONE,nonce=1,txid=0"' -->
