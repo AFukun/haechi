@@ -21,7 +21,7 @@ do
         echo "shard number is $OPTARG"
         SHARD_NUM=$OPTARG
         ;;
-    m) # shard number
+    m) # shard size
         echo "shard size is $OPTARG"
         SHARD_SIZE=$OPTARG
         ;;  

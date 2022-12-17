@@ -1,7 +1,7 @@
 source ~/.bashrc
 GOSRC=$GOPATH/src
-TEST_SCENE="byshard"
-TM_HOME="$HOME/.haechibyshard"
+TEST_SCENE="haechi"
+TM_HOME="$HOME/.haechiOrder"
 WORKSPACE="$GOSRC/github.com/AFukun/haechi"
 CURRENT_DATE=`date +"%Y-%m-%d-%H-%M"`
 LOG_DIR="$WORKSPACE/tmplog/$TEST_SCENE-$CURRENT_DATE"
@@ -21,7 +21,7 @@ do
         echo "shard number is $OPTARG"
         SHARD_NUM=$OPTARG
         ;;
-    m) # shard number
+    m) # shard size
         echo "shard size is $OPTARG"
         SHARD_SIZE=$OPTARG
         ;;  
@@ -51,10 +51,24 @@ rm -rf $TM_HOME/*
 mkdir -p $TM_HOME
 mkdir -p $LOG_DIR
 
-cp -r $WORKSPACE/EC2-test/configs/30node/* $TM_HOME
+cp -r $WORKSPACE/configs/EC2-test/30node/* $TM_HOME
 echo "configs generated"
 
-pkill -9 byshard
+pkill -9 haechibc
+pkill -9 haechishard
+
+# run beacon node
+for ((i=0;i<$SHARD_SIZE;i++))
+do
+    if [ $i -eq 0 ]; then
+        echo "running beacon leader"
+        ./build/haechibc -home $TM_HOME/beacon/node$i -leader "true" -shards $SHARD_NUM -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/beaconnode$i.log &
+    else
+        echo "running beacon validator"
+        ./build/haechibc -home $TM_HOME/beacon/node$i -leader "false" -shards $SHARD_NUM -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/beaconnode$i.log &
+    fi
+    sleep 1
+done
 
 # run shard node
 for ((j=0;j<$SHARD_NUM;j++))
@@ -63,10 +77,10 @@ do
     do
         if [ $k -eq 0 ]; then
             echo "running shard$j leader"
-            ./build/byshard -home $TM_HOME/shard$j/node$k -leader "true" -shards $SHARD_NUM -shardid $j -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard$j-node$k.log &
+            ./build/haechishard -home $TM_HOME/shard$j/node$k -leader "true" -shards $SHARD_NUM -shardid $j -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard$j-node$k.log &
         else
             echo "running shard$j validator$k"
-            ./build/byshard -home $TM_HOME/shard$j/node$k -leader "false" -shards $SHARD_NUM -shardid $j -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard$j-node$k.log &
+            ./build/haechishard -home $TM_HOME/shard$j/node$k -leader "false" -shards $SHARD_NUM -shardid $j -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard$j-node$k.log &
         fi
     sleep 1
     done
@@ -75,5 +89,6 @@ done
 echo "testnet launched"
 echo "running for ${DURATION}s..."
 sleep $DURATION
-pkill -9 byshard
+pkill -9 haechibc
+pkill -9 haechishard
 echo "all done"
