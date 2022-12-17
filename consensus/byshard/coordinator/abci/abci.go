@@ -2,6 +2,9 @@ package abci
 
 import (
 	"encoding/binary"
+	"fmt"
+	"time"
+
 	// "log"
 	// "time"
 
@@ -49,8 +52,6 @@ func (byshardApplication) Info(req abcitypes.RequestInfo) abcitypes.ResponseInfo
 }
 
 func (app *byshardApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
-	// tln("receive tx " + string(req.Tx))
-	// tln("receive tx, current time is: " + time.Now().String())
 	return abcitypes.ResponseCheckTx{Code: abcicode.CodeTypeOK, GasWanted: 1}
 }
 
@@ -59,7 +60,6 @@ func (app *byshardApplication) BeginBlock(req abcitypes.RequestBeginBlock) abcit
 }
 
 func (app *byshardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	// tln("deliver tx, current time is: " + time.Now().String())
 	_, tx_json := byshardNode.ResolveTx(req.Tx)
 	var err1, err2 error
 	var events []abcitypes.Event
@@ -74,13 +74,11 @@ func (app *byshardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcityp
 		Data:       tx_json.Data,
 	}
 	if tx_json.Tx_type == byshardNode.IntraShard_TX {
-		// // tln("This is an intra-shard transaction")
 		event_type = "intra-shard transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 		app.Node.BCState.Size++
 	} else if tx_json.Tx_type == byshardNode.InterShard_TX_Verify {
-		// // tln("This is a verification transaction")
 		event_type = "inter-shard verification transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("lock"))
 		new_tx.Tx_type = byshardNode.InterShard_TX_Execute
@@ -90,7 +88,6 @@ func (app *byshardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcityp
 		}
 
 	} else if tx_json.Tx_type == byshardNode.InterShard_TX_Execute {
-		// // tln("This is an execution transaction")
 		event_type = "inter-shard execution transaction"
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("lock"))
 		new_tx.Tx_type = byshardNode.InterShard_TX_Commit
@@ -99,17 +96,19 @@ func (app *byshardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcityp
 			go app.Node.DeliverCommitTx(commit_tx, new_tx.From_shard)
 		}
 	} else if tx_json.Tx_type == byshardNode.InterShard_TX_Commit {
-		// // tln("This is a commit transaction")
 		event_type = "inter-shard commit transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
+		// Trace: cross-shard tx confirmation latency
+		if string(tx_json.From) == "CROS" {
+			fmt.Println("cross-shard trace, nonce is", tx_json.Nonce)
+			fmt.Println("cross-shard trace, end time is", time.Now())
+		}
 		new_tx.Tx_type = byshardNode.InterShard_TX_Update
 		_, update_tx := byshardNode.Deserilization(new_tx)
 		if app.Node.Leader {
 			go app.Node.DeliverUpdateTx(update_tx, new_tx.To_shard)
 		}
 	} else if tx_json.Tx_type == byshardNode.InterShard_TX_Update {
-		// tln("commit tx " + string(req.Tx))
-		// // tln("This is an update transaction")
 		event_type = "inter-shard update transaction"
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 		app.Node.BCState.Size++

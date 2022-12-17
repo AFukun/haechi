@@ -2,6 +2,7 @@ package validator
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"math"
 	"net"
@@ -191,6 +192,9 @@ func (nw *ValidatorInterface) FormCCLs() {
 
 func (nw *ValidatorInterface) UpdateShardCrosslinkMsgs(request []byte) {
 	shardid := CheckFromShardId(request)
+	// MicroBench: test time difference of shard's CrossLinks
+	temp_output := fmt.Sprintf("current block height is %v, receive CrossLink from %v, at time %v", nw.BCState.Height, shardid, time.Now())
+	fmt.Println(temp_output)
 	_, crosslinks := hctypes.RequestToCrossLinks(request)
 	for _, crosslink := range crosslinks {
 		nw.ShardCLMsgs[shardid].CL.Enqueue(crosslink)

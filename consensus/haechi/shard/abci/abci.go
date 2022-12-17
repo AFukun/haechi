@@ -2,6 +2,8 @@ package abci
 
 import (
 	"encoding/binary"
+	"fmt"
+
 	// "log"
 	"strconv"
 	"time"
@@ -46,8 +48,6 @@ func (HaechiShardApplication) Info(req abcitypes.RequestInfo) abcitypes.Response
 }
 
 func (app *HaechiShardApplication) CheckTx(req abcitypes.RequestCheckTx) abcitypes.ResponseCheckTx {
-	// tln("receive tx " + string(req.Tx))
-	// tln("receive tx, current time is: " + time.Now().String())
 	return abcitypes.ResponseCheckTx{Code: abcicode.CodeTypeOK, GasWanted: 1}
 }
 
@@ -56,10 +56,7 @@ func (app *HaechiShardApplication) BeginBlock(req abcitypes.RequestBeginBlock) a
 }
 
 func (app *HaechiShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abcitypes.ResponseDeliverTx {
-	// tln("deliver tx " + string(req.Tx))
-	// tln("deliver tx, current time is: " + time.Now().String())
 	_, tx_json := haechiNode.ResolveTx(req.Tx)
-	// // tln("Deliver tx, tx nonce is: ", tx_json.Nonce)
 	var err1, err2 error
 	var events []abcitypes.Event
 	var event_type string
@@ -69,7 +66,6 @@ func (app *HaechiShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abc
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 		app.Node.BCState.Size++
 	} else if tx_json.Tx_type == haechiNode.InterShard_TX_Verify {
-		// // tln("Receive an inter-shard tx: " + string(req.Tx))
 		app.Node.BCState.Index++
 		event_type = "inter-shard transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("lock"))
@@ -80,7 +76,6 @@ func (app *HaechiShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abc
 		app.Node.Current_cl += strconv.Itoa(int(app.Node.BCState.Index))
 		app.Node.Current_cl += ">"
 	} else if tx_json.Tx_type == haechiNode.CrossShard_Call_List {
-		// // tln("Receive a call list from beacon chain: " + string(req.Tx))
 		_, ccl_txs := hctypes.TxToCCL(req.Tx, app.Node.Shard_id)
 		index := ccl_txs.Call_txs.Size()
 		for i := uint(0); i < uint(index); i++ {
@@ -101,17 +96,19 @@ func (app *HaechiShardApplication) DeliverTx(req abcitypes.RequestDeliverTx) abc
 			app.Node.BCState.Size++
 		}
 	} else if tx_json.Tx_type == haechiNode.InterShard_TX_Commit {
-		// // tln("This is a commit transaction")
 		event_type = "inter-shard commit transaction"
 		err1 = app.Node.BCState.Database.Set(prefixKey(tx_json.From), []byte("0"))
+		// Trace: cross-shard tx confirmation latency
+		if string(tx_json.From) == "CROS" {
+			fmt.Println("cross-shard trace, nonce is", tx_json.Nonce)
+			fmt.Println("cross-shard trace, end time is", time.Now())
+		}
 		tx_json.Tx_type = haechiNode.InterShard_TX_Update
 		_, new_tx := haechiNode.Deserilization(tx_json)
 		if app.Node.Leader {
-			// // tln("start send update tx, to: ", tx_json.To_shard)
 			go app.Node.DeliverUpdateTx(new_tx, tx_json.To_shard)
 		}
 	} else if tx_json.Tx_type == haechiNode.InterShard_TX_Update {
-		// tln("This is an update transaction, successfully commit a cross-shard tx")
 		event_type = "inter-shard update transaction"
 		err2 = app.Node.BCState.Database.Set(prefixKey(tx_json.To), []byte("0"))
 		app.Node.BCState.Size++

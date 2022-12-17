@@ -84,7 +84,7 @@ $ make build
 Note: checkput to master to generate configs:
 1. 127.0.0.1 -> 0.0.0.0
 2. node listening port 266xx -> 20xxx
-3. indexer = ["null"] -> indexer = ["kv"]
+3. indexer = ["kv"] -> indexer = ["kv"]
 -->
 
 <!-- curl 'http://3.15.172.201:26657/broadcast_tx_commit?tx="fromid=0,toid=1,type=0,from=ABCD,to=DCBA,value=10,data=NONE,nonce=1,txid=0"' -->
