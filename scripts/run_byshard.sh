@@ -14,7 +14,7 @@ BEACON_IP="127.0.0.1"
 SHARD_PORTS="20057,21057"
 SHARD_IPS="127.0.0.1,127.0.0.1"
 
-while getopts ":n:m:p:i:s:x:" opt
+while getopts ":n:m:p:i:s:x:d:" opt
 do 
     case $opt in
     n) # shard number
@@ -40,6 +40,10 @@ do
     x) # shard ips
         echo "shardips is $OPTARG"  
         SHARD_IPS=$OPTARG
+        ;;
+    d) # executing duration
+        echo "duration is $OPTARG"  
+        DURATION=$OPTARG
         ;;  
     ?)  
         echo "unknown: $OPTARG"
@@ -71,11 +75,6 @@ do
     sleep 1
     done
 done
-
-# ./build/byshard -home $TM_HOME/shard0/node0 -leader "true" -shards $SHARD_NUM -shardid 0 -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard0node0.log &
-# ./build/byshard -home $TM_HOME/shard1/node0 -leader "true" -shards $SHARD_NUM -shardid 1 -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard1node0.log &
-# ./build/byshard -home $TM_HOME/shard0/node1 -leader "false" -shards $SHARD_NUM -shardid 0 -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard0node1.log &
-# ./build/byshard -home $TM_HOME/shard1/node1 -leader "false" -shards $SHARD_NUM -shardid 1 -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard1node1.log &
 
 echo "testnet launched"
 echo "running for ${DURATION}s..."

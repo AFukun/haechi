@@ -14,7 +14,7 @@ BEACON_IP="127.0.0.1"
 SHARD_PORTS="20057,21057"
 SHARD_IPS="127.0.0.1,127.0.0.1"
 
-while getopts ":n:m:p:i:s:x:" opt
+while getopts ":n:m:p:i:s:x:d:" opt
 do 
     case $opt in
     n) # shard number
@@ -40,6 +40,10 @@ do
     x) # shard ips
         echo "shardips is $OPTARG"  
         SHARD_IPS=$OPTARG
+        ;;
+    d) # executing duration
+        echo "duration is $OPTARG"  
+        DURATION=$OPTARG
         ;;  
     ?)  
         echo "unknown: $OPTARG"
@@ -85,14 +89,6 @@ do
     sleep 1
     done
 done
-
-# ./build/haechishard -home $TM_HOME/shard0/node0 -leader "true" -shards 2 -shardid 0 -inport 10057 -outport "20057,21057" &> $LOG_DIR/shard0node0.log &
-# ./build/haechishard -home $TM_HOME/shard1/node0 -leader "true" -shards 2 -shardid 1 -inport 10057 -outport "20057,21057" &> $LOG_DIR/shard1node0.log &
-# ./build/haechishard -home $TM_HOME/shard0/node1 -leader "false" -shards 2 -shardid 0 -inport 10057 -outport "20057,21057" &> $LOG_DIR/shard0node1.log &
-# ./build/haechishard -home $TM_HOME/shard1/node1 -leader "false" -shards 2 -shardid 1 -inport 10057 -outport "20057,21057" &> $LOG_DIR/shard1node1.log &
-# ./build/haechibc -home $TM_HOME/beacon/node0 -leader "true" -shards 2 -inport 10057 -outport "20057,21057" &> $LOG_DIR/beaconnode0.log &
-# ./build/haechibc -home $TM_HOME/beacon/node1 -leader "false" -shards 2 -inport 10157 -outport "20057,21057" &> $LOG_DIR/beaconnode1.log &
-
 
 echo "testnet launched"
 echo "running for ${DURATION}s..."

@@ -14,7 +14,7 @@ BEACON_IP="127.0.0.1"
 SHARD_PORTS="20057,21057"
 SHARD_IPS="127.0.0.1,127.0.0.1"
 
-while getopts ":n:m:p:i:s:x:" opt
+while getopts ":n:m:p:i:s:x:d:" opt
 do 
     case $opt in
     n) # shard number
@@ -40,7 +40,11 @@ do
     x) # shard ips
         echo "shardips is $OPTARG"  
         SHARD_IPS=$OPTARG
-        ;;  
+        ;;
+    d) # executing duration
+        echo "duration is $OPTARG"  
+        DURATION=$OPTARG
+        ;;
     ?)  
         echo "unknown: $OPTARG"
         ;;
@@ -51,7 +55,7 @@ rm -rf $TM_HOME/*
 mkdir -p $TM_HOME
 mkdir -p $LOG_DIR
 
-cp -r configs/ahl/* $TM_HOME
+cp -r $WORKSPACE/configs/EC2-test/30node/* $TM_HOME
 echo "configs generated"
 
 pkill -9 ahlbc
@@ -86,15 +90,6 @@ do
     done
 done
 
-# ./build/ahlshard -home $TM_HOME/shard0/node0 -leader "true" -shards $SHARD_NUM -shardid 0 -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard0node0.log &
-# ./build/ahlshard -home $TM_HOME/shard1/node0 -leader "true" -shards $SHARD_NUM -shardid 1 -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard1node0.log &
-# sleep 2
-# ./build/ahlshard -home $TM_HOME/shard0/node1 -leader "false" -shards $SHARD_NUM -shardid 0 -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard0node1.log &
-# ./build/ahlshard -home $TM_HOME/shard1/node1 -leader "false" -shards $SHARD_NUM -shardid 1 -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/shard1node1.log &
-# sleep 2
-# ./build/ahlbc -home $TM_HOME/beacon/node0 -leader "true" -shards $SHARD_NUM -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS - &> $LOG_DIR/beaconnode0.log &
-# sleep 2
-# ./build/ahlbc -home $TM_HOME/beacon/node1 -leader "false" -shards $SHARD_NUM -beaconport $BEACON_PORT -shardports $SHARD_PORTS -beaconip $BEACON_IP -shardips $SHARD_IPS &> $LOG_DIR/beaconnode1.log &
 echo "testnet launched"
 echo "running for ${DURATION}s..."
 sleep $DURATION

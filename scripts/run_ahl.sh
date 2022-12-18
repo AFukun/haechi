@@ -14,7 +14,7 @@ BEACON_IP="127.0.0.1"
 SHARD_PORTS="20057,21057"
 SHARD_IPS="127.0.0.1,127.0.0.1"
 
-while getopts ":n:m:p:i:s:x:" opt
+while getopts ":n:m:p:i:s:x:d:" opt
 do 
     case $opt in
     n) # shard number
@@ -40,6 +40,10 @@ do
     x) # shard ips
         echo "shardips is $OPTARG"  
         SHARD_IPS=$OPTARG
+        ;;
+    d) # executing duration
+        echo "duration is $OPTARG"  
+        DURATION=$OPTARG
         ;;  
     ?)  
         echo "unknown: $OPTARG"
@@ -51,7 +55,7 @@ rm -rf $TM_HOME/*
 mkdir -p $TM_HOME
 mkdir -p $LOG_DIR
 
-cp -r $WORKSPACE/configs/EC2-test/30node/* $TM_HOME
+cp -r configs/ahl/* $TM_HOME
 echo "configs generated"
 
 pkill -9 ahlbc
