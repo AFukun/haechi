@@ -12,7 +12,7 @@
 
 # TCP or UNIX socket address of the ABCI application,
 # or the name of an ABCI application compiled in with the Tendermint binary
-proxy-app = "tcp://0.0.0.0:40958"
+proxy-app = "tcp://0.0.0.0:50958"
 
 # A custom human readable name for this node
 moniker = "752A3DBC8BCA639C"
@@ -112,7 +112,7 @@ root-ca-file = ""
 [rpc]
 
 # TCP or UNIX socket address for the RPC server to listen on
-laddr = "tcp://0.0.0.0:40957"
+laddr = "tcp://0.0.0.0:50957"
 
 # A list of origins a cross-domain request can be executed from
 # Default value '[]' disables cors support
@@ -209,18 +209,18 @@ pprof-laddr = ""
 [p2p]
 
 # Select the p2p internal queue.
-# Options are: "fifo" and "simple-priority", and "priority",
-# with the default being "simple-priority".
-queue-type = "simple-priority"
+# Options are: "fifo" and "priority", and "priority",
+# with the default being "priority".
+queue-type = "priority"
 
 # Address to listen for incoming connections
-laddr = "tcp://0.0.0.0:40956"
+laddr = "tcp://0.0.0.0:50956"
 
 # Address to advertise to peers for them to dial
 # If empty, will use the same port as the laddr,
 # and will introspect on the listener or use UPnP
 # to figure out the address. ip and port are required
-# example: 159.89.10.97:40956
+# example: 159.89.10.97:50956
 external-address = ""
 
 # Comma separated list of peers to be added to the peer store
@@ -229,7 +229,7 @@ external-address = ""
 bootstrap-peers = ""
 
 # Comma separated list of nodes to keep persistent connections to
-persistent-peers = "8bac5c13d9f55cc05147396e5a93abca8d040870@127.0.0.2:40056,c29880fcb5eff7c171039f2743af6fb0fe199445@127.0.0.3:40156,8569db97344a05438f7c88faf85a88ab58bf1623@127.0.0.4:40256,cf61c972062a5c4f5c4a80e16d2b2e8d7b051590@127.0.0.5:40356,3c019e48f9b45f699bd603dc6420de3f8ce21963@127.0.0.6:40456,361e51690672babd5d98ae9810cabdf5b1e81f15@127.0.0.7:40556,e2149429cb5038d631238c55f364645e7cf48f26@127.0.0.8:40656,43a24331f091a143852219d2c5f19bc4212fb376@127.0.0.9:40756,d2879f71590ea084b360f8123cf8d9923a9b6f4a@127.0.0.10:40856,e823daa0e9bea993e871439850e62c4b22985b32@127.0.0.12:41056,3c3b67718b66fa72869026441d7b091a30296920@127.0.0.13:41156,1c242b6d22428c47233b7b539b435da6203a2e44@127.0.0.14:41256,8801ea3384515cfb71d5dd4b723b1a92bac2b571@127.0.0.15:41356,41594e9aba50028c88e3ceb3972950feec2bb027@127.0.0.16:41456,120de00dcb0c001633864d5ad42beecdd3faa46b@127.0.0.17:41556,5530b3911079a908e70d8ed8c0caa47d79ffe650@127.0.0.18:41656,a17f5787f2bb60d189b2e0d7b1f01451ea642746@127.0.0.19:41756,7b13cf3ba42ab97b56c2fb57fa1d06673a414d50@127.0.0.20:41856,31eb295b83d9e636bc41d49f7250df8444c3faec@127.0.0.21:41956,7e6f10dd72d7104abe3f771b892c2cc679d24b4f@127.0.0.22:42056,4ae917180d3d4ec7e7757be38670e70445abe3e8@127.0.0.23:42156,18f5151d111345e2a3ea7f4baf6feacc8fd36a68@127.0.0.24:42256,747c96a658dcbef3d5873163b0de46057e5a3fed@127.0.0.25:42356,4a77d181a062bf02d0ff110c3daf00f3adb4f7e8@127.0.0.26:42456,e20e29e98b49d3dca1e02a6e8901f2b3cefc0149@127.0.0.27:42556,4da68674ee6da11293834a76b353fe41fcc877a6@127.0.0.28:42656,31a6584ed02a28b1aa1cf851067658c2b8eab898@127.0.0.29:42756,5462e42e6b9de10152e2b32a46c6a975d413d0a3@127.0.0.30:42856,7a701e278622ae35cf0932baab826be40612f647@127.0.0.31:42956"
+persistent-peers = "6c539719eeeedbe768ca6e709df3dff8ef8ba519@127.0.0.2:50056,6374c7324fbaac2edf20e944449283531fdf86c2@127.0.0.50156,3600d79312490bf220f6ed23a0502fa65951e673@127.0.0.4:50256,73d43cbde65a34d296d0cf400a6d3b577154fcfc@127.0.0.5:50356,dc378a1f06cacab1a8c3d8eb94442c15d5dae21f@127.0.0.6:50456,fef1e80db81527b0c1f364d95801fa8866ba6a1d@127.0.0.7:50556,efba247110918f9cce1ccf8f17ab9d65ad94a307@127.0.0.8:50656,b9d00027cc88ed7f87280bb4cd6ec7acfd5b5e4b@127.0.0.9:50756,a3280b3c1d4c4b101a233e88942666421f246836@127.0.0.10:50856,8072d9626b4db93631e3d75b8aba39bacf34f6e1@127.0.0.12:51056,a2b3308db754aecb3c3fc29a744a6a1fe5fc7df4@127.0.0.13:51156,2d13b0e0e99af98e9b37074cc39c47aa84e6af8f@127.0.0.14:51256,45941e6ce1e4dccdaa2b95eaeb40a0a7f46c6312@127.0.0.15:51356,0a773eb8416fa63336227007b9af316de65e5f8f@127.0.0.16:51456,a8699572c11087f377118bdc2f7a5319fdd1d4c1@127.0.0.17:51556,8f776b4a436ccba939582867d1035fc9cc29922c@127.0.0.18:51656,061f4118b5362e9d1c32771b4542da9958e7eb6e@127.0.0.19:51756,fd41ce70d9ecd2cb322d430a2215f7a9ddca6ea5@127.0.0.20:51856,320cb6ea7fcfefc0b447eaaa40ad8bd80137ea9c@127.0.0.21:51956,734b8f9d429188206317361acd7b0449a9c7875b@127.0.0.22:52056,0dd4129cc84f23d8fa0ecf2ff9312d3ede9ea77c@127.0.0.23:52156,4932708ea2835634bfa67ddba97236308302d4f9@127.0.0.24:52256,ede7526771a122d21ec4c00ff85ddf36caa74f35@127.0.0.25:52356,7127eeeb9644b3f989e6447e0ff83b21243788a8@127.0.0.26:52456,9f04cd0429bedfda6e0c5c061ea1340ae4c18ebd@127.0.0.27:52556,947d47ad4ecd933644de9833e9ea01bdbf52a675@127.0.0.28:52656,835c53152b7c030a54babee031c34d82aab1bbf3@127.0.0.29:52756,adee798cb87c6e4d10aa506203716d68cd0b2cbf@127.0.0.30:52856,9447f56f889d641d8e0baa8fde50137a98b9ec08@127.0.0.31:52956"
 
 # UPNP port forwarding
 upnp = false
@@ -467,7 +467,7 @@ psql-conn = ""
 prometheus = false
 
 # Address to listen for Prometheus collector(s) connections
-prometheus-listen-addr = ":40960"
+prometheus-listen-addr = ":50960"
 
 # Maximum number of simultaneous connections.
 # If you want to accept a larger number than the default, make sure

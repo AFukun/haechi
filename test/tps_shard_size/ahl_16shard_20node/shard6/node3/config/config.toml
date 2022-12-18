@@ -209,8 +209,8 @@ pprof-laddr = ""
 [p2p]
 
 # Select the p2p internal queue.
-# Options are: "fifo" and "simple-priority", and "priority",
-# with the default being "simple-priority".
+# Options are: "fifo" and "priority", and "priority",
+# with the default being "priority".
 queue-type = "priority"
 
 # Address to listen for incoming connections
